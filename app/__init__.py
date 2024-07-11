@@ -1,10 +1,12 @@
 from flask import Flask
+from flask_cors import CORS
 from app.config import load_configurations, configure_logging
 from .views import webhook_blueprint
 
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     # Load configurations and logging settings
     load_configurations(app)

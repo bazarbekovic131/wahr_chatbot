@@ -4,7 +4,7 @@ import json
 import requests
 
 # from app.services.openai_service import generate_ai_ response
-from db import WADatabase
+from .db import WADatabase
 import re
 
 db_config = {
