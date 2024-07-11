@@ -68,7 +68,7 @@ def run_assistant(thread, name):
     return new_message
 
 
-def generate_response(message_body, wa_id, name):
+def generate_ai_response(message_body, wa_id, name):
     # Check if there is already a thread_id for the wa_id
     thread_id = check_if_thread_exists(wa_id)
 
