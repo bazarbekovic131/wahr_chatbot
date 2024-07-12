@@ -14,6 +14,11 @@ def load_configurations(app):
     app.config["VERSION"] = os.getenv("VERSION")
     app.config["PHONE_NUMBER_ID"] = os.getenv("PHONE_NUMBER_ID")
     app.config["VERIFY_TOKEN"] = os.getenv("VERIFY_TOKEN")
+    app.config["DBNAME"] = os.getenv("DBNAME")
+    app.config["DBHOST"] = os.getenv("DBHOST")
+    app.config["DBPORT"] = os.getenv("DBPORT")
+    app.config["DBUSER"] = os.getenv("DBUSER")
+    app.config["DBPASSWORD"] = os.getenv("DBPASSWORD")
 
 
 def configure_logging():

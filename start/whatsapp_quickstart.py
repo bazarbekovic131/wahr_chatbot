@@ -83,8 +83,8 @@ def send_message(data):
         return response
 
 
-data = get_text_message_input(
+data = get_text_message_input( # get_text_message_input returns a json
     recipient=RECIPIENT_WAID, text="Hello, this is a test message."
-)
+) # data is json 
 
-response = send_message(data)
+response = send_message(data) # gets data as json and sends this to. data is get_text_mes_input(waid, text) 

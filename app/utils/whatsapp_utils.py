@@ -8,19 +8,52 @@ from .db import WADatabase
 import re
 
 db_config = {
-    'host': 'localhost',
-    'database': 'shark_whatsapp',
-    'user': 'shark',
-    'password': 'shark',
-    'port': '5432'
+    'host': f'{current_app.config["DBHOST"]}',
+    'database': f'{current_app.config["DBNAME"]}',
+    'user': f'{current_app.config["DBUSER"]}',
+    'password': f'{current_app.config["DBPASSWORD"]}',
+    'port': f'{current_app.config["DBPORT"]}'
 }
 database = WADatabase(db_config)
 
+def is_valid_whatsapp_message(body):
+    """
+    Check if the incoming webhook event has a valid WhatsApp message structure.
+    """
+    return (
+        body.get("object")
+        and body.get("entry")
+        and body["entry"][0].get("changes")
+        and body["entry"][0]["changes"][0].get("value")
+        and body["entry"][0]["changes"][0]["value"].get("messages")
+        and body["entry"][0]["changes"][0]["value"]["messages"][0]
+    )
+
+# logs http response
 def log_http_response(response):
     logging.info(f"Status: {response.status_code}")
     logging.info(f"Content-type: {response.headers.get('content-type')}")
     logging.info(f"Body: {response.text}")
 
+# processes OpenAI style text to What's App style text (for AI integration)
+def process_text(text): 
+    # Remove brackets
+    pattern = r"\【.*?\】"
+    # Substitute the pattern with an empty string
+    text = re.sub(pattern, "", text).strip()
+
+    # Pattern to find double asterisks including the word(s) in between
+    pattern = r"\*\*(.*?)\*\*"
+
+    # Replacement pattern with single asterisks
+    replacement = r"*\1*"
+
+    # Substitute occurrences of the pattern with the replacement
+    whatsapp_style_text = re.sub(pattern, replacement, text)
+
+    return whatsapp_style_text
+
+# returns the JSON from the text. So i need to turn my text fetched from database using this command
 def get_text_message_input(recipient, text):
     return json.dumps(
         {
@@ -32,25 +65,7 @@ def get_text_message_input(recipient, text):
         }
     )
 
-def send_vacancies(from_number):
-    """Handle incoming messages and answer with vacancy list."""
-    vacancies = database.get_vacancies()
-    
-    message = "Отлично! У нас есть несколько открытых позиций:\n\n"
-    for id, vacancy in vacancies:
-        message = message + "\n" + f"{id}. {vacancy}"
-    logging.info(f'Message to be sent: {message}')
-    
-    
-    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    # data = get_text_message_input(from_number, message)
-    send_message(data)
-
-def send_vacancy_details(from_number, data):
-    message = f'Вакансия: {data[0]}\n\n Требования:\n {data[1]}\n\n  Условия работы:\n {data[2]}'
-    data_to_be_sent = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    send_message(data_to_be_sent)
-
+# sends a message (first, a reply is required)
 def send_message(data):
     headers = {
         "Content-type": "application/json",
@@ -77,24 +92,64 @@ def send_message(data):
         log_http_response(response)
         return response
 
+def send_template_message(template_name = "hello_world", code = "en-US"):
+    url = f"https://graph.facebook.com/{current_app["VERSION"]}/{current_app.config["PHONE_NUMBER_ID"]}/messages"
+    headers = {
+        "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
+        "Content-Type": "application/json",
+    }
+    data = {
+        "messaging_product": "whatsapp",
+        "to": current_app.config["RECIPIENT_WAID"], #change to something else
+        "type": "template",
+        "template": {"name": f"{template_name}", "language": {"code": f"{code}"}},
+    }
+    response = requests.post(url, headers=headers, json=data)
+    return response
 
-def process_text(text):
-    # Remove brackets
-    pattern = r"\【.*?\】"
-    # Substitute the pattern with an empty string
-    text = re.sub(pattern, "", text).strip()
 
-    # Pattern to find double asterisks including the word(s) in between
-    pattern = r"\*\*(.*?)\*\*"
+# Should send a message (non-template message) to the user when he requests vacancy list
+def send_vacancies(from_number):
+    """Handle incoming messages and answer with vacancy list."""
+    vacancies = database.get_vacancies()
+    
+    message = "Отлично! У нас есть несколько открытых позиций:\n\n"
+    for id, vacancy in vacancies:
+        message = message + "\n" + f"{id}. {vacancy}"
+    logging.info(f'Message to be sent: {message}')
+    
+    
+    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
+    # data = get_text_message_input(from_number, message)
+    send_message(data)
 
-    # Replacement pattern with single asterisks
-    replacement = r"*\1*"
+# Should send a vacancy details
+def send_vacancy_details(from_number, vacancy):
+    '''
+    input - from_number - is the whats app id of the recipient, in the format +787777777 (KZ)
+    vacancy - it is an array fetched from the database by the script
 
-    # Substitute occurrences of the pattern with the replacement
-    whatsapp_style_text = re.sub(pattern, replacement, text)
+    output - sends a message in data format (e.g. message is converted to JSON format)
+    '''
 
-    return whatsapp_style_text
+    message = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}'
 
+    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
+    # data = get_text_message_input(from_number, message)
+    send_message(data)
+
+def send_company_details(from_number):
+    message = f'Наша компания является одной из ведущих строительной компаний Казахстана'
+    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
+    # data = get_text_message_input(from_number, message)
+    send_message(data)
+
+def asked_for_help(from_number):
+    message = f'Чем я могу Вам помочь?' # add template, change send_message to send_whatsapp_message
+    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
+    # data = get_text_message_input(from_number, message)
+
+    send_message(data) 
 
 def process_whatsapp_message(body):
     wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"] # change .config recipient waid to this i guess
@@ -111,14 +166,24 @@ def process_whatsapp_message(body):
     if ('ваканс' in message or 'работ' in message): # list vacancies
         send_vacancies(wa_id)
 
-        for idx, vacancy_title in vacancies: # vacancy details
-            if vacancy_title.lower() in message_body:
-                response = database.get_vacancy_details(idx)
-                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
-                send_message(data)
-                break
+    if ('расскажите о компании' in message.lower()):
+        send_company_details(wa_id)
 
+    if ('мне нужна помощь' in message.lower()):
+        send_company_details(wa_id)
 
+    # if ('социальные льготы' in message.lower()):
+    #     send_company_details(wa_id)
+
+    for idx, vacancy_title in vacancies: # vacancy details
+        if vacancy_title.lower() in message_body:
+            vacancy = database.get_vacancy_details(idx)
+            # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
+            # send_message(data)
+            send_vacancy_details(wa_id, vacancy)
+            break
+
+            
 
 
 
@@ -133,21 +198,10 @@ def process_whatsapp_message(body):
     
     # OpenAI Integration
     # response = generate_ai_response(message_body, wa_id, name)
-    # response = process_text_for_whatsapp(response)
+    # response = process_text(response)
 
     # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
     # send_message(data)
 
 
-def is_valid_whatsapp_message(body):
-    """
-    Check if the incoming webhook event has a valid WhatsApp message structure.
-    """
-    return (
-        body.get("object")
-        and body.get("entry")
-        and body["entry"][0].get("changes")
-        and body["entry"][0]["changes"][0].get("value")
-        and body["entry"][0]["changes"][0]["value"].get("messages")
-        and body["entry"][0]["changes"][0]["value"]["messages"][0]
-    )
+
