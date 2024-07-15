@@ -123,7 +123,8 @@ def send_vacancies(from_number):
         message = message + "\n" + f"{id}. {vacancy}"
     logging.info(f'Message to be sent: {message}')
     
-    
+    # TODO: handle as template?
+
     data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
     # data = get_text_message_input(from_number, message)
     send_message(data)
@@ -145,6 +146,12 @@ def send_vacancy_details(from_number, vacancy):
 
 def send_company_details(from_number):
     message = f'Наша компания является одной из ведущих строительной компаний Казахстана'
+    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
+    # data = get_text_message_input(from_number, message)
+    send_message(data)
+
+def send_social_details(from_number):
+    message = f'Здесь будут описаны условия соц. пакета'
     data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
     # data = get_text_message_input(from_number, message)
     send_message(data)
@@ -177,8 +184,8 @@ def process_whatsapp_message(body):
     if ('мне нужна помощь' in message.lower()):
         send_company_details(wa_id)
 
-    # if ('социальные льготы' in message.lower()):
-    #     send_company_details(wa_id)
+    if ('социальные льготы' in message.lower()):
+        send_social_details(wa_id)
 
     for idx, vacancy_title in vacancies: # vacancy details
         if vacancy_title.lower() in message_body:
