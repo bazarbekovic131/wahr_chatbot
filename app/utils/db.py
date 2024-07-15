@@ -44,6 +44,17 @@ class WADatabase():
                         );'''
             cur.execute(create_table_query)
 
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS resumes (
+                    id SERIAL PRIMARY KEY,
+                    user_phone VARCHAR(20),
+                    resume_filename VARCHAR(255),
+                    resume_data BYTEA,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    sent BOOLEAN DEFAULT FALSE
+                );
+            ''')
+
             self.conn.commit()
 
     def get_user(self, phone):
@@ -102,6 +113,35 @@ class WADatabase():
             df = cursor.fetchone()
             return df
 
-    # def save_resume(self, resume_path):
-    #     # Implement the method to save resume to a specified path
-    #     pass
+    def insert_resume(self, user_phone, resume_filename, resume_data):
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO resumes (user_phone, resume_filename, resume_data)
+                VALUES (%s, %s, %s)
+                """,
+                (user_phone, resume_filename, resume_data)
+            )
+            self.connection.commit()
+
+    def get_resumes_older_than(self, days):
+        with self.connection.cursor() as cursor:
+            query = """
+                SELECT user_phone, user_address, resume_filename, resume_data
+                FROM resumes
+                WHERE created_at <= NOW() - INTERVAL '%s days'
+                AND sent = FALSE
+            """
+            cursor.execute(query, (days,))
+            return cursor.fetchall()
+
+    def mark_resumes_as_sent(self, resumes):
+        with self.connection.cursor() as cursor:
+            query = """
+                UPDATE resumes
+                SET sent = TRUE
+                WHERE id = ANY(%s)
+            """
+            resume_ids = [resume['id'] for resume in resumes]
+            cursor.execute(query, (resume_ids,))
+            self.connection.commit()

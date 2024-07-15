@@ -8,6 +8,9 @@ from .utils.whatsapp_utils import (
     process_whatsapp_message,
     is_valid_whatsapp_message,
 )
+from dotenv import load_dotenv
+import os
+from app.utils.db import WADatabase
 
 webhook_blueprint = Blueprint("webhook", __name__)
 
@@ -86,4 +89,22 @@ def webhook_get():
 def webhook_post():
     return handle_message()
 
+@webhook_blueprint.route('/test', methods=['POST', 'GET'])
+def webhook_test():
+    db_config = {
+        'host': os.getenv("DBHOST"),
+        'database': os.getenv("DBNAME"),
+        'user': os.getenv("DBUSER"),
+        'password': os.getenv("DBPASSWORD"),
+        'port': os.getenv("DBPORT")
+    }
+    database = WADatabase(db_config)
+    test_retrieve = database.get_vacancies()
+    
+    message = "Отлично! У нас есть несколько открытых позиций:\n\n"
+    for id, vacancy in test_retrieve:
+        message = message + "\n" + f"{id}. {vacancy}"
+    logging.info(f'Message to be sent: {message}')
+
+    return jsonify(message)
 

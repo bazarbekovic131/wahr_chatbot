@@ -2,17 +2,22 @@ import logging
 from flask import current_app, jsonify
 import json
 import requests
+from dotenv import load_dotenv
+import os
 
 # from app.services.openai_service import generate_ai_ response
+# from app.services.email_service import send_email_with_resume
 from .db import WADatabase
 import re
 
+load_dotenv()
+
 db_config = {
-    'host': f'{current_app.config["DBHOST"]}',
-    'database': f'{current_app.config["DBNAME"]}',
-    'user': f'{current_app.config["DBUSER"]}',
-    'password': f'{current_app.config["DBPASSWORD"]}',
-    'port': f'{current_app.config["DBPORT"]}'
+    'host': os.getenv("DBHOST"),
+    'database': os.getenv("DBNAME"),
+    'user': os.getenv("DBUSER"),
+    'password': os.getenv("DBPASSWORD"),
+    'port': os.getenv("DBPORT")
 }
 database = WADatabase(db_config)
 
@@ -93,7 +98,7 @@ def send_message(data):
         return response
 
 def send_template_message(template_name = "hello_world", code = "en-US"):
-    url = f"https://graph.facebook.com/{current_app["VERSION"]}/{current_app.config["PHONE_NUMBER_ID"]}/messages"
+    url = f"https://graph.facebook.com/{current_app['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
     headers = {
         "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
         "Content-Type": "application/json",
