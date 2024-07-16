@@ -1,5 +1,8 @@
 flask
+flask-cors
 python-dotenv
 openai
 aiohttp
 requests
+psycorg2-binary
+pandas
