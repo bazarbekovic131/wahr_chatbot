@@ -175,16 +175,16 @@ def process_whatsapp_message(body):
 
     vacancies = database.get_vacancies()
     
-    if ('ваканс' in message or 'работ' in message): # list vacancies
+    if ('ваканс' in message_body or 'работ' in message_body): # list vacancies
         send_vacancies(wa_id)
 
-    if ('расскажите о компании' in message.lower()):
+    if ('расскажите о компании' in message_body.lower()):
         send_company_details(wa_id)
 
-    if ('мне нужна помощь' in message.lower()):
+    if ('мне нужна помощь' in message_body.lower()):
         send_company_details(wa_id)
 
-    if ('социальные льготы' in message.lower()):
+    if ('социальные льготы' in message_body.lower()):
         send_social_details(wa_id)
 
     for idx, vacancy_title in vacancies: # vacancy details
