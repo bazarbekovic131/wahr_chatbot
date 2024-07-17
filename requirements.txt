@@ -1,8 +1,8 @@
-flask
-flask-cors
-python-dotenv
+flask==3.0.2
+flask-cors==4.0.0
+python-dotenv==1.0.1
 openai
-aiohttp
+aiohttp==3.9.5
 requests
 psycorg2-binary
 pandas

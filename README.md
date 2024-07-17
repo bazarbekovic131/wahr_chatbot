@@ -200,9 +200,22 @@ When dealing with WhatsApp Business API and wanting to experiment without affect
 
 **Recommendation**: If this is for a more prolonged or professional purpose, using a virtual phone number service or purchasing a new SIM card for a dedicated device is advisable. For quick tests, a temporary number might suffice, but always be cautious about security and privacy. Remember that once a number is associated with WhatsApp Business API, it cannot be used with regular WhatsApp on a device unless you deactivate it from the Business API and reverify it on the device.
 
-## Datalumina
-
-This document is provided to you by Datalumina. We help data analysts, engineers, and scientists launch and scale a successful freelance business — $100k+ /year, fun projects, happy clients. If you want to learn more about what we do, you can visit our [website](https://www.datalumina.com/) and subscribe to our [newsletter](https://www.datalumina.com/newsletter). Feel free to share this document with your data friends and colleagues.
-
 ## Tutorials
 For video tutorials, visit the YouTube channel: [youtube.com/@daveebbelaar](youtube.com/@daveebbelaar)
+
+
+## service file
+[Unit]
+Description = Gunicorn Instance to serve flask what's App bot.
+After = network.target
+
+[Service]
+User=web-shark-kz
+Group=www-data
+WorkingDirectory=/home/web-shark-kz/Documents/wahr_chatbot/
+Environment="PATH=/home/web-shark-kz/Documents/wahr_chatbot/myenv/bin"
+ExecStart=/home/web-shark-kz/Documents/wahr_chatbot/myenv/bin/gunicorn -w 4 -b 0.0.0.0:5000 app:run
+
+[Install]
+
+WantedBy = multi-user.target
