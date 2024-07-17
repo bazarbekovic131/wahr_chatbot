@@ -97,7 +97,7 @@ def send_message(data):
         log_http_response(response)
         return response
 
-def send_template_message(template_name = "hello_world", code = "en-US"):
+def send_template_message(number, template_name = "hello_world", code = "en-US"):
     url = f"https://graph.facebook.com/{current_app['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
     headers = {
         "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
@@ -174,26 +174,32 @@ def process_whatsapp_message(body):
     # response = generate_response(message_body)
 
     vacancies = database.get_vacancies()
-    
+    sent_answer = False
     if ('ваканс' in message_body or 'работ' in message_body): # list vacancies
         send_vacancies(wa_id)
+        sent_answer = True
 
     if ('расскажите о компании' in message_body.lower()):
         send_company_details(wa_id)
-
+        sent_answer = True
     if ('мне нужна помощь' in message_body.lower()):
         send_company_details(wa_id)
-
+        sent_answer = True
     if ('социальные льготы' in message_body.lower()):
         send_social_details(wa_id)
+        sent_answer = True
+    if ('резюме' in message_body.lower()):
+        send_template_message(wa_id, template_name="resume", code="ru")
+        sent_answer = True
 
-    for idx, vacancy_title in vacancies: # vacancy details
-        if vacancy_title.lower() in message_body:
-            vacancy = database.get_vacancy_details(idx)
-            # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
-            # send_message(data)
-            send_vacancy_details(wa_id, vacancy)
-            break
+    if not sent_answer:
+        for idx, vacancy_title in vacancies: # vacancy details
+            if vacancy_title.lower() in message_body:
+                vacancy = database.get_vacancy_details(idx)
+                # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
+                # send_message(data)
+                send_vacancy_details(wa_id, vacancy)
+                break
 
             
 
