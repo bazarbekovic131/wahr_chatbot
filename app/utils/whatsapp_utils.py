@@ -179,16 +179,16 @@ def process_whatsapp_message(body):
         send_vacancies(wa_id)
         sent_answer = True
 
-    if ('расскажите о компании' in message.lower()):
+    if ('расскажите о компании' in message):
         send_company_details(wa_id)
         sent_answer = True
-    if ('мне нужна помощь' in message.lower()):
+    if ('мне нужна помощь' in message):
         send_company_details(wa_id)
         sent_answer = True
-    if ('социальные льготы' in message.lower()):
+    if ('социальные льготы' in message):
         send_social_details(wa_id)
         sent_answer = True
-    if ('резюме' in message.lower()):
+    if ('резюме' in message):
         send_template_message(wa_id, template_name="resume", code="ru")
         sent_answer = True
 
