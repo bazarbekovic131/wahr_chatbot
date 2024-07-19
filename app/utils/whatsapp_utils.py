@@ -175,31 +175,34 @@ def process_whatsapp_message(body):
 
     vacancies = database.get_vacancies()
     sent_answer = False
-    if ('ваканс' in message_body or 'работ' in message_body): # list vacancies
+    if ('ваканс' in message or 'работ' in message): # list vacancies
         send_vacancies(wa_id)
         sent_answer = True
 
-    if ('расскажите о компании' in message_body.lower()):
+    if ('расскажите о компании' in message.lower()):
         send_company_details(wa_id)
         sent_answer = True
-    if ('мне нужна помощь' in message_body.lower()):
+    if ('мне нужна помощь' in message.lower()):
         send_company_details(wa_id)
         sent_answer = True
-    if ('социальные льготы' in message_body.lower()):
+    if ('социальные льготы' in message.lower()):
         send_social_details(wa_id)
         sent_answer = True
-    if ('резюме' in message_body.lower()):
+    if ('резюме' in message.lower()):
         send_template_message(wa_id, template_name="resume", code="ru")
         sent_answer = True
 
     if not sent_answer:
         for idx, vacancy_title in vacancies: # vacancy details
-            if vacancy_title.lower() in message_body:
+            if vacancy_title.lower() in message:
                 vacancy = database.get_vacancy_details(idx)
                 # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
                 # send_message(data)
                 send_vacancy_details(wa_id, vacancy)
+                sent_answer = True
                 break
+    if not sent_answer:
+        send_template_message(wa_id,template_name="greeting", code="ru")
 
             
 
