@@ -27,9 +27,12 @@ def signature_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        signature = request.headers.get("X-Hub-Signature-256", "")[
-            7:
-        ]  # Removing 'sha256='
+        signature = request.headers.get("X-Hub-Signature-256", "")
+        if signature.startswith("sha256="):
+            signature = signature[7:]  # Remove 'sha256='
+        else:
+            logging.info("Signature format invalid!")
+            return jsonify({"status": "error", "message": "Invalid signature format"}), 403
         if not validate_signature(request.data.decode("utf-8"), signature):
             logging.info("Signature verification failed!")
             return jsonify({"status": "error", "message": "Invalid signature"}), 403
