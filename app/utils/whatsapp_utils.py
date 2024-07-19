@@ -169,43 +169,64 @@ def process_whatsapp_message(body):
     name = body["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
 
     message = body["entry"][0]["changes"][0]["value"]["messages"][0]
-    message_body = message["text"]["body"]
+
+
+    # Determine the type of message and handle accordingly
+    message_type = message.get("type")
+    message_body = None
+    payload = None
+
+    vacancies = database.get_vacancies()
+
+    if message_type == "text":
+        message_body = message.get("text", {}).get("body", "")
+        sent_answer = False
+        
+        if ('ваканс' in message_body or 'работ' in message_body): # list vacancies # This should be deprecated
+            send_vacancies(wa_id)
+            sent_answer = True
+
+        if ('расскажите о компании' in message_body):
+            send_company_details(wa_id)
+            sent_answer = True
+        if ('мне нужна помощь' in message_body):
+            send_company_details(wa_id)
+            sent_answer = True
+        if ('социальные льготы' in message_body):
+            send_social_details(wa_id)
+            sent_answer = True
+        if ('резюме' in message):
+            send_template_message(wa_id, template_name="resume", code="ru")
+            sent_answer = True
+
+        if not sent_answer:
+            for idx, vacancy_title in vacancies: # vacancy details
+                if vacancy_title.lower() in message_body:
+                    vacancy = database.get_vacancy_details(idx)
+                    # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
+                    # send_message(data)
+                    send_vacancy_details(wa_id, vacancy)
+                    sent_answer = True
+                    break
+        if not sent_answer:
+            logging.info("Trying to send a template message")
+            res = send_template_message(wa_id, template_name="greeting", code="ru")
+            logging.info(f'Response: {res}')
+            
+    elif message_type == "button":
+        payload = message.get("button", {}).get("payload", "")
+        if payload == 'Вакансии':
+            send_vacancies(wa_id)
+        if payload == 'Отправить резюме':
+            send_message(get_text_message_input(wa_id, "Эта опция будет скоро включена"))
+    
+    # payload = message['button']['payload'] # Access the payload of the button it is like Вакансии or Отправить резюме.
 
     # TODO: implement custom function here
     # response = generate_response(message_body)
 
-    vacancies = database.get_vacancies()
-    sent_answer = False
-    if ('ваканс' in message or 'работ' in message): # list vacancies
-        send_vacancies(wa_id)
-        sent_answer = True
+    
 
-    if ('расскажите о компании' in message):
-        send_company_details(wa_id)
-        sent_answer = True
-    if ('мне нужна помощь' in message):
-        send_company_details(wa_id)
-        sent_answer = True
-    if ('социальные льготы' in message):
-        send_social_details(wa_id)
-        sent_answer = True
-    if ('резюме' in message):
-        send_template_message(wa_id, template_name="resume", code="ru")
-        sent_answer = True
-
-    if not sent_answer:
-        for idx, vacancy_title in vacancies: # vacancy details
-            if vacancy_title.lower() in message:
-                vacancy = database.get_vacancy_details(idx)
-                # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
-                # send_message(data)
-                send_vacancy_details(wa_id, vacancy)
-                sent_answer = True
-                break
-    if not sent_answer:
-        logging.info("Trying to send a template message")
-        res = send_template_message(wa_id, template_name="greeting", code="ru")
-        logging.info(f'Response: res')
 
             
 
