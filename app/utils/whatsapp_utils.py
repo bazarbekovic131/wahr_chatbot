@@ -21,6 +21,17 @@ db_config = {
 }
 database = WADatabase(db_config)
 
+# Example survey questions with JSON keys
+survey_questions = [
+    {"question": "Как вас зовут?", "key": "name"},
+    {"question": "Сколько вам лет?", "key": "email"},
+    {"question": "На какую вакансию вы хотите устроиться?", "key": "vacancy"},
+    {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
+]
+
+# In-memory session storage (for demonstration purposes)
+sessions = {}
+
 def is_valid_whatsapp_message(body):
     """
     Check if the incoming webhook event has a valid WhatsApp message structure.
@@ -113,6 +124,28 @@ def send_template_message(number, template_name = "hello_world", code = "en-US")
     response = requests.post(url, headers=headers, json=data)
     return response
 
+def send_location_message(number, latitude, longitude, name, address):
+    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
+    headers = {
+        "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
+        "Content-Type": "application/json",
+    }
+    data = {
+        "messaging_product": "whatsapp",
+        "to": current_app.config["RECIPIENT_WAID"], #change to something else
+        "type": "location",
+        "location": {
+            "latitude": f"{latitude}",
+            "longitude": f"{longitude}",
+            "name": f"{name}",
+            "address": f"{address}"
+        }
+    }
+    logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
+    response = requests.post(url, headers=headers, json=data)
+    return response
+
+
 
 # Should send a message (non-template message) to the user when he requests vacancy list
 def send_vacancies(from_number):
@@ -145,6 +178,7 @@ def send_vacancy_details(from_number, vacancy):
     # data = get_text_message_input(from_number, message)
     send_message(data)
 
+@DeprecationWarning
 def send_company_details(from_number):
     message = f'Наша компания является одной из ведущих строительной компаний Казахстана'
     data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
@@ -157,47 +191,37 @@ def send_social_details(from_number):
     # data = get_text_message_input(from_number, message)
     send_message(data)
 
-def asked_for_help(from_number):
-    message = f'Чем я могу Вам помочь?' # add template, change send_message to send_whatsapp_message
-    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    # data = get_text_message_input(from_number, message)
-
-    send_message(data) 
-
 def process_whatsapp_message(body):
     wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"] # change .config recipient waid to this i guess
     name = body["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
 
     message = body["entry"][0]["changes"][0]["value"]["messages"][0]
 
-
     # Determine the type of message and handle accordingly
     message_type = message.get("type")
     message_body = None
     payload = None
+    document_id = None
 
     vacancies = database.get_vacancies()
-
+    sent_answer = False
     if message_type == "text":
-        message_body = message.get("text", {}).get("body", "").lower()
-        sent_answer = False
+        message_body = message.get("text", {}).get("body", "").lower()    
         
         if ('ваканс' in message_body or 'работ' in message_body): # list vacancies # This should be deprecated
             send_vacancies(wa_id)
             sent_answer = True
+            # return 1
 
-        if ('расскажите о компании' in message_body):
-            send_company_details(wa_id)
-            sent_answer = True
-        if ('мне нужна помощь' in message_body):
-            send_company_details(wa_id)
-            sent_answer = True
         if ('социальные льготы' in message_body):
             send_social_details(wa_id)
             sent_answer = True
+            # return 1
+
         if ('резюме' in message_body):
-            send_template_message(wa_id, template_name="resume", code="ru")
+            send_template_message(wa_id, template_name="resume_form", code="ru")
             sent_answer = True
+            # return 1
 
         if not sent_answer:
             for idx, vacancy_title in vacancies: # vacancy details
@@ -210,17 +234,37 @@ def process_whatsapp_message(body):
                     break
         if not sent_answer:
             logging.info("Trying to send a template message")
-            res = send_template_message(wa_id, template_name="greeting", code="ru")
+            res = send_template_message(wa_id, template_name="help_ru", code="ru")
             logging.info(f'Response: {res}')
             
     elif message_type == "button":
         payload = message.get("button", {}).get("payload", "")
         if payload == 'Вакансии':
             send_vacancies(wa_id)
+            send_template_message
+        if payload == 'О нас':
+            send_template_message(wa_id, template_name="company_details", code="ru") #TODO: reimplemented DONE
+        if payload == 'Помощь':
+            send_template_message(wa_id, template_name="help_ru", code="ru")
         if payload == 'Отправить резюме':
             send_message(get_text_message_input(wa_id, "Эта опция будет скоро включена"))
-        if payload == 'О нас':
-            send_template_message(wa_id, template_name="greeting", code="ru") #TODO: reimplement
+            if wa_id not in sessions:
+                sessions[wa_id] = {"responses": {}, "current_step": 0}
+            user_session = sessions[wa_id]
+            current_step = user_session["current_step"]
+
+        if payload == 'Процесс найма':
+            send_template_message(wa_id, template_name="hiring_conditions", code="ru")
+
+        
+    elif message_type == "document":
+        document_id = message['document']['id']
+        filename = message['document']['filename']
+        user_session["responses"].append(document_id)
+        # Process the CV document if needed
+        send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
+        logging.info(f"Survey responses for {wa_id}: {user_session['responses']}")
+        del sessions[wa_id]
     
     # payload = message['button']['payload'] # Access the payload of the button it is like Вакансии or Отправить резюме.
 
