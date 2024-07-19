@@ -45,9 +45,11 @@ def handle_message():
     try:
         if is_valid_whatsapp_message(body):
             process_whatsapp_message(body)
+            logging.info("Valid What's App message received. Processing started")
             return jsonify({"status": "ok"}), 200
         else:
             # if the request is not a WhatsApp API event, return an error
+            logging.info("Not a valid What's App API event")
             return (
                 jsonify({"status": "error", "message": "Not a WhatsApp API event"}),
                 404,

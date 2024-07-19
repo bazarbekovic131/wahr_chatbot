@@ -202,7 +202,8 @@ def process_whatsapp_message(body):
                 sent_answer = True
                 break
     if not sent_answer:
-        send_template_message(wa_id,template_name="greeting", code="ru")
+        logging.info("Trying to send a template message")
+        send_template_message(wa_id, template_name="greeting", code="ru")
 
             
 
