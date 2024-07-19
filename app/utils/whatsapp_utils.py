@@ -179,7 +179,7 @@ def process_whatsapp_message(body):
     vacancies = database.get_vacancies()
 
     if message_type == "text":
-        message_body = message.get("text", {}).get("body", "")
+        message_body = message.get("text", {}).get("body", "").lower()
         sent_answer = False
         
         if ('ваканс' in message_body or 'работ' in message_body): # list vacancies # This should be deprecated
@@ -195,7 +195,7 @@ def process_whatsapp_message(body):
         if ('социальные льготы' in message_body):
             send_social_details(wa_id)
             sent_answer = True
-        if ('резюме' in message):
+        if ('резюме' in message_body):
             send_template_message(wa_id, template_name="resume", code="ru")
             sent_answer = True
 
@@ -219,6 +219,8 @@ def process_whatsapp_message(body):
             send_vacancies(wa_id)
         if payload == 'Отправить резюме':
             send_message(get_text_message_input(wa_id, "Эта опция будет скоро включена"))
+        if payload == 'О нас':
+            send_template_message(wa_id, template_name="greeting", code="ru") #TODO: reimplement
     
     # payload = message['button']['payload'] # Access the payload of the button it is like Вакансии or Отправить резюме.
 
