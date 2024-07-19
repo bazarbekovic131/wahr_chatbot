@@ -98,7 +98,7 @@ def send_message(data):
         return response
 
 def send_template_message(number, template_name = "hello_world", code = "en-US"):
-    url = f"https://graph.facebook.com/{current_app['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
+    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
     headers = {
         "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
         "Content-Type": "application/json",
