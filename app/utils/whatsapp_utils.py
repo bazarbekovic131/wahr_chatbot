@@ -109,6 +109,7 @@ def send_template_message(number, template_name = "hello_world", code = "en-US")
         "type": "template",
         "template": {"name": f"{template_name}", "language": {"code": f"{code}"}},
     }
+    logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
     response = requests.post(url, headers=headers, json=data)
     return response
 
@@ -203,7 +204,8 @@ def process_whatsapp_message(body):
                 break
     if not sent_answer:
         logging.info("Trying to send a template message")
-        send_template_message(wa_id, template_name="greeting", code="ru")
+        res = send_template_message(wa_id, template_name="greeting", code="ru")
+        logging.info(f'Response: res')
 
             
 
