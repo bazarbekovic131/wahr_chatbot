@@ -257,7 +257,24 @@ def test():
         }
     }
 
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    try:
+        response = requests.post(
+            url, data=data, headers=headers, timeout=10
+        )  # 10 seconds timeout as an example
+        response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code
+    except requests.Timeout:
+        logging.error("Timeout occurred while sending message")
+        return jsonify({"status": "error", "message": "Request timed out"}), 408
+    except (
+        requests.RequestException
+    ) as e:  # This will catch any general request exception
+        logging.error(f"Request failed due to: {e}")
+        return jsonify({"status": "error", "message": "Failed to send message"}), 500
+    else:
+        # Process the response as normal
+        log_http_response(response)
+        return response
+
 
 
 ##### Higher level messages ####
