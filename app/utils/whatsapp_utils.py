@@ -122,7 +122,6 @@ def send_interactive(wa_id, interactive_elements):
         "to": current_app.config["RECIPIENT_WAID"], #change to something else
     }
     data.update(interactive_elements)
-    data = json.dumps(data, indent=4)
 
     logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
     response = requests.post(url, headers=headers, json=data)
@@ -205,7 +204,8 @@ def send_vacancies(wa_id):
     sections = database.get_vacancies_for_interactive_message()
 
     data = create_interactive_json( header_text, body_text, footer_text, button_text, sections )
-    send_interactive(wa_id, data)
+    res = send_interactive(wa_id, data)
+    logging.info(res)
 
 
 # Should send a vacancy details
