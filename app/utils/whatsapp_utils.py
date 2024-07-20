@@ -118,6 +118,7 @@ def send_interactive(wa_id, interactive_elements):
 
     data = {
         "messaging_product": "whatsapp",
+        "recipient_type": "individual",
         "to": current_app.config["RECIPIENT_WAID"], #change to something else
     }
     data.update(interactive_elements)
