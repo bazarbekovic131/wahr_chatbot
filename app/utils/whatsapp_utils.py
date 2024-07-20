@@ -70,12 +70,12 @@ def process_text(text):
     return whatsapp_style_text
 
 # returns the JSON from the text. So i need to turn my text fetched from database using this command
-def get_text_message_input(recipient, text):
+def get_text_message_input(wa_id, text):
     return json.dumps(
         {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": recipient,
+            "to": wa_id,
             "type": "text",
             "text": {"preview_url": False, "body": text},
         }
@@ -124,8 +124,18 @@ def send_interactive(wa_id, interactive_elements):
     data.update(interactive_elements)
 
     logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
-    response = requests.post(url, headers=headers, json=data)
-    return response
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()
+    except requests.Timeout:
+        logging.error("Timeout occurred while sending message")
+        return jsonify({"status": "error", "message": "Request timed out"}), 408
+    except requests.RequestException as e:
+        logging.error(f"Request failed due to: {e}")
+        return jsonify({"status": "error", "message": "Failed to send message"}), 500
+    else:
+        log_http_response(response)
+        return response
 
 # sends a message (first, a reply is required)
 def send_message(data):
@@ -204,9 +214,7 @@ def send_vacancies(wa_id):
     sections = database.get_vacancies_for_interactive_message()
 
     data = create_interactive_json( header_text, body_text, footer_text, button_text, sections )
-    res = send_interactive(wa_id, data)
-    logging.info(res)
-
+    send_interactive(wa_id, data)
 
 # Should send a vacancy details
 def send_vacancy_details(from_number, vacancy):
