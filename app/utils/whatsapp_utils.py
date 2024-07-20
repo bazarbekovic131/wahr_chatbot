@@ -29,7 +29,7 @@ survey_questions = [
     {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
 ]
 
-# In-memory session storage (for demonstration purposes)
+# In-memory session storage
 sessions = {}
 
 def is_valid_whatsapp_message(body):
@@ -80,6 +80,87 @@ def get_text_message_input(recipient, text):
             "text": {"preview_url": False, "body": text},
         }
     )
+
+# Получение данных из базы данных PostgreSQL, таблица vacancies
+def fetch_data_from_database(section_title = "Вакансии/Категория вакансии"):
+    # TODO: interact with DB to be DONE
+    data = [
+        {
+            "section_title": section_title,
+            "rows": [
+                {"id": "1", "title": "Software Engineer", "description": "Work on Web Apps"},
+                {"id": "2", "title": "Data Scientist", "description": "Analyze data and build models"}
+            ]
+        },
+    ]
+    return data
+
+def create_interactive_json(header_text, body_text, footer_text, button_text):
+    data = fetch_data_from_database()
+    sections = []
+    
+    for section in data:
+        section_data = {
+            "title": section["section_title"],
+            "rows": []
+        }
+        for row in section["rows"]:
+            row_data = {
+                "id": row["id"],
+                "title": row["title"],
+                "description": row["description"]
+            }
+            section_data["rows"].append(row_data)
+        sections.append(section_data)
+    
+    interactive_json = {
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "header": {
+                "type": "text",
+                "text": header_text
+            },
+            "body": {
+                "text": body_text
+            },
+            "footer": {
+                "text": footer_text
+            },
+            "action": {
+                "sections": sections,
+                "button": button_text
+            }
+        }
+    }
+    
+    return interactive_json
+
+def send_interactive(wa_id, interactive_elements):
+    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
+    
+    headers = {
+        "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "to": current_app.config["RECIPIENT_WAID"], #change to something else
+    }
+    data.update(interactive_elements)
+    logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
+    response = requests.post(url, headers=headers, json=data)
+    return response
+
+
+
+
+
+
+
+
+
 
 # sends a message (first, a reply is required)
 def send_message(data):
