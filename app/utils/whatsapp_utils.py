@@ -228,7 +228,7 @@ def send_vacancy_details(from_number, vacancy):
     output - sends a message in data format (e.g. message is converted to JSON format)
     '''
 
-    message = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}'
+    message = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}' #TODO: add new columns i guess
 
     data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
     # data = get_text_message_input(from_number, message)
@@ -279,7 +279,7 @@ def process_whatsapp_message(body):
 
         if not sent_answer:
             logging.info("Trying to send a template message")
-            res = send_template_message(wa_id, template_name="help_ru", code="ru")
+            res = send_template_message(wa_id, template_name="greeting", code="ru")
             logging.info(f'Response: {res}')
             
     elif message_type == "button":
@@ -313,7 +313,7 @@ def process_whatsapp_message(body):
         interactive = message.get("interactive", {})
         interactive_type = interactive.get("type", "")
         if interactive_type == 'list_reply':
-            vacancy_id = int(interactive_type.get("id", ""))
+            vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
             vacancy = database.get_vacancy_details(vacancy_id)
             send_vacancy_details(wa_id, vacancy)
 
