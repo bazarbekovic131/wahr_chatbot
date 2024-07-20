@@ -201,7 +201,66 @@ def send_location_message(number, latitude, longitude, name, address):
     response = requests.post(url, headers=headers, json=data)
     return response
 
+def test():
+    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
+    headers = {
+        "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
+        "Content-Type": "application/json",
+    }
+    data = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": current_app.config["RECIPIENT_WAID"],
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "header": {
+                "type": "text",
+                "text": "Вакансии"
+            },
+            "body": {
+                "text": "Отлично! У нас есть несколько открытых позиций. Пожалуйста, откройте меню для ознакомления"
+            },
+            "footer": {
+                "text": "Это сообщение отправлено автоматически"
+            },
+            "action": {
+                "sections": [
+                    {
+                        "title": "Доступные вакансии",
+                        "rows": [
+                            {
+                                "id": "1",
+                                "title": "Инженер-строитель",
+                                "description": ""
+                            },
+                            {
+                                "id": "2",
+                                "title": "Прораб",
+                                "description": ""
+                            },
+                            {
+                                "id": "3",
+                                "title": "Архитектор",
+                                "description": ""
+                            },
+                            {
+                                "id": "4",
+                                "title": "Оператор строительной техники",
+                                "description": ""
+                            }
+                        ]
+                    }
+                ],
+                "button": "Выбрать"
+            }
+        }
+    }
 
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+
+##### Higher level messages ####
 
 # Should send a message (non-template message) to the user when he requests vacancy list
 def send_vacancies(wa_id):
