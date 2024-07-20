@@ -122,10 +122,10 @@ class WADatabase():
         
 
     def get_vacancies_for_interactive_message(self):
-        vacancies = self.get_vacancies_with_details()
+        vacancies = self.get_vacancies()
         sections = [{
             "title": "Доступные вакансии",
-            "rows": [{"id": str(vac[0]), "title": vac[1], "details": vac[2], "tasks": vac[3]} for vac in vacancies]
+            "rows": [{"id": str(vac[0]), "title": vac[1], "description": ""} for vac in vacancies]
         }]
         return sections
 
