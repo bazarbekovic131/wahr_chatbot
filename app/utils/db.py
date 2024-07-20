@@ -40,9 +40,9 @@ class WADatabase():
                         CREATE TABLE IF NOT EXISTS vacancies (
                             id SERIAL PRIMARY KEY,
                             title VARCHAR(255) NOT NULL,
-                            tasks TEXT,
-                            details TEXT,
                             requirements TEXT,
+                            details TEXT,
+                            tasks TEXT,
                         );'''
             cur.execute(create_table_query)
 
