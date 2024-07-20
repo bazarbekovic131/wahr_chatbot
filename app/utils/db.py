@@ -123,9 +123,25 @@ class WADatabase():
 
     def get_vacancies_for_interactive_message(self):
         vacancies = self.get_vacancies()
+        def shorten_title(title, max_length=24):
+            """
+            Shortens a given title to a maximum length.
+            
+            Args:
+                title (str): название вакансии.
+                max_length (int): максимальная длина заголовка.
+                
+            Returns:
+                str: The shortened title.
+            """
+
+            if len(title) > max_length:
+                return title[:max_length]  # Truncate the title to the max length
+            return title
+
         sections = [{
             "title": "Доступные вакансии",
-            "rows": [{"id": str(vac[0]), "title": vac[1], "description": ""} for vac in vacancies]
+            "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in vacancies]
         }]
         return sections
 
