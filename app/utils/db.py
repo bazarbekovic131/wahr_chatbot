@@ -42,8 +42,8 @@ class WADatabase():
                             title VARCHAR(255) NOT NULL,
                             requirements TEXT,
                             details TEXT,
-                            tasks TEXT,
-                        );'''
+                            tasks TEXT
+                            );'''
             cur.execute(create_table_query)
 
             cur.execute('''

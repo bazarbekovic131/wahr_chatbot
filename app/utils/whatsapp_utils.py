@@ -233,7 +233,6 @@ def process_whatsapp_message(body):
     payload = None
     document_id = None
 
-    vacancies = database.get_vacancies()
     sent_answer = False
     if message_type == "text":
         message_body = message.get("text", {}).get("body", "").lower()    
@@ -254,6 +253,7 @@ def process_whatsapp_message(body):
             # return 1
 
         if not sent_answer:
+            vacancies = database.get_vacancies()
             for idx, vacancy_title in vacancies: # vacancy details
                 if vacancy_title.lower() in message_body:
                     vacancy = database.get_vacancy_details(idx)
