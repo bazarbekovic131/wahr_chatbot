@@ -202,7 +202,8 @@ def send_vacancies(wa_id):
 
     sections = database.get_vacancies_for_interactive_message()
 
-    data = create_interactive_json( header_text, body_text, footer_text, button_text, sections )
+    processed_json = create_interactive_json( header_text, body_text, footer_text, button_text, sections )
+    data = json.dumps(processed_json, indent=4)
     send_interactive(wa_id, data)
 
 
@@ -275,6 +276,7 @@ def process_whatsapp_message(body):
             send_template_message(wa_id, template_name="company_details", code="ru") #TODO: reimplemented DONE
         
         if payload == 'Вакансии':
+            logging.info('Vacancies Payload Reached. Trying to send interactive message')
             send_vacancies(wa_id)
 
         if payload == 'Помощь':
