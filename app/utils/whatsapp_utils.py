@@ -245,6 +245,7 @@ def process_whatsapp_message(body):
     message_body = None
     payload = None
     document_id = None
+    interactive = None
 
     sent_answer = False
     if message_type == "text":
@@ -308,7 +309,14 @@ def process_whatsapp_message(body):
         if payload == 'Связаться с HR':
             send_template_message(wa_id, template_name="help_ru", code="ru")
 
-        
+    elif message_type == 'interactive':
+        interactive = message.get("interactive", {})
+        interactive_type = interactive.get("type", "")
+        if interactive_type == 'list_reply':
+            vacancy_id = int(interactive_type.get("id", ""))
+            vacancy = database.get_vacancy_details(vacancy_id)
+            send_vacancy_details(wa_id, vacancy)
+
     elif message_type == "document":
         document_id = message['document']['id']
         filename = message['document']['filename']
