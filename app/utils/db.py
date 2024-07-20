@@ -6,6 +6,7 @@ class WADatabase():
 
     def __init__(self, db_config):
         self.conn = self.create_connection(db_config)
+        self.create_tables()
 
     def create_connection(self, db_config):
         try:
@@ -39,8 +40,9 @@ class WADatabase():
                         CREATE TABLE IF NOT EXISTS vacancies (
                             id SERIAL PRIMARY KEY,
                             title VARCHAR(255) NOT NULL,
+                            tasks TEXT,
+                            details TEXT,
                             requirements TEXT,
-                            details TEXT
                         );'''
             cur.execute(create_table_query)
 
@@ -106,12 +108,26 @@ class WADatabase():
         with self.conn.cursor() as cursor:
             cursor.execute("SELECT id, title FROM vacancies")
             return cursor.fetchall()
+        
+    def get_vacancies_with_details(self):
+        with self.conn.cursor() as cursor:
+            cursor.execute("SELECT id, title, tasks, details FROM vacancies")
+            return cursor.fetchall()
 
     def get_vacancy_details(self, vacancy_id):
         with self.conn.cursor() as cursor:
             cursor.execute("SELECT title, requirements, details FROM vacancies WHERE id=%s", (vacancy_id,))
             df = cursor.fetchone()
             return df
+        
+
+    def get_vacancies_for_interactive_message(self):
+        vacancies = self.get_vacancies_with_details()
+        sections = [{
+            "title": "Доступные вакансии",
+            "rows": [{"id": str(vac[0]), "title": vac[1], "details": vac[2], "tasks": vac[3]} for vac in vacancies]
+        }]
+        return sections
 
     def insert_resume(self, user_phone, resume_filename, resume_data):
         with self.connection.cursor() as cursor:

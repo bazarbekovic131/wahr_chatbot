@@ -81,38 +81,10 @@ def get_text_message_input(recipient, text):
         }
     )
 
-# Получение данных из базы данных PostgreSQL, таблица vacancies
-def fetch_data_from_database(section_title = "Вакансии/Категория вакансии"):
-    # TODO: interact with DB to be DONE
-    data = [
-        {
-            "section_title": section_title,
-            "rows": [
-                {"id": "1", "title": "Software Engineer", "description": "Work on Web Apps"},
-                {"id": "2", "title": "Data Scientist", "description": "Analyze data and build models"}
-            ]
-        },
-    ]
-    return data
-
-def create_interactive_json(header_text, body_text, footer_text, button_text):
-    data = fetch_data_from_database()
-    sections = []
-    
-    for section in data:
-        section_data = {
-            "title": section["section_title"],
-            "rows": []
-        }
-        for row in section["rows"]:
-            row_data = {
-                "id": row["id"],
-                "title": row["title"],
-                "description": row["description"]
-            }
-            section_data["rows"].append(row_data)
-        sections.append(section_data)
-    
+def create_interactive_json(header_text, body_text, footer_text, button_text, sections):
+    """
+        This should be documented
+    """
     interactive_json = {
         "type": "interactive",
         "interactive": {
@@ -149,18 +121,10 @@ def send_interactive(wa_id, interactive_elements):
         "to": current_app.config["RECIPIENT_WAID"], #change to something else
     }
     data.update(interactive_elements)
+    
     logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
     response = requests.post(url, headers=headers, json=data)
     return response
-
-
-
-
-
-
-
-
-
 
 # sends a message (first, a reply is required)
 def send_message(data):
@@ -229,20 +193,18 @@ def send_location_message(number, latitude, longitude, name, address):
 
 
 # Should send a message (non-template message) to the user when he requests vacancy list
-def send_vacancies(from_number):
+def send_vacancies(wa_id):
     """Handle incoming messages and answer with vacancy list."""
-    vacancies = database.get_vacancies()
-    
-    message = "Отлично! У нас есть несколько открытых позиций:\n\n"
-    for id, vacancy in vacancies:
-        message = message + "\n" + f"{id}. {vacancy}"
-    logging.info(f'Message to be sent: {message}')
-    
-    # TODO: handle as template?
+    header_text = "Вакансии"
+    footer_text = "Это сообщение отправлено автоматически"
+    body_text = "Отлично! У нас есть несколько открытых позиций. Пожалуйста, откройте меню для ознакомления"
+    button_text = "Выбрать"
 
-    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    # data = get_text_message_input(from_number, message)
-    send_message(data)
+    sections = database.get_vacancies_for_interactive_message()
+
+    data = create_interactive_json( header_text, body_text, footer_text, button_text, sections )
+    send_interactive(wa_id, data)
+
 
 # Should send a vacancy details
 def send_vacancy_details(from_number, vacancy):
@@ -255,19 +217,6 @@ def send_vacancy_details(from_number, vacancy):
 
     message = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}'
 
-    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    # data = get_text_message_input(from_number, message)
-    send_message(data)
-
-@DeprecationWarning
-def send_company_details(from_number):
-    message = f'Наша компания является одной из ведущих строительной компаний Казахстана'
-    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    # data = get_text_message_input(from_number, message)
-    send_message(data)
-
-def send_social_details(from_number):
-    message = f'Здесь будут описаны условия соц. пакета'
     data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
     # data = get_text_message_input(from_number, message)
     send_message(data)
@@ -294,10 +243,10 @@ def process_whatsapp_message(body):
             sent_answer = True
             # return 1
 
-        if ('социальные льготы' in message_body):
-            send_social_details(wa_id)
-            sent_answer = True
-            # return 1
+        # if ('социальные льготы' in message_body):
+        #     send_social_details(wa_id)
+        #     sent_answer = True
+        #     # return 1
 
         if ('резюме' in message_body):
             send_template_message(wa_id, template_name="resume_form", code="ru")
@@ -313,6 +262,7 @@ def process_whatsapp_message(body):
                     send_vacancy_details(wa_id, vacancy)
                     sent_answer = True
                     break
+
         if not sent_answer:
             logging.info("Trying to send a template message")
             res = send_template_message(wa_id, template_name="help_ru", code="ru")
@@ -320,22 +270,29 @@ def process_whatsapp_message(body):
             
     elif message_type == "button":
         payload = message.get("button", {}).get("payload", "")
-        if payload == 'Вакансии':
-            send_vacancies(wa_id)
-            send_template_message
+        
         if payload == 'О нас':
             send_template_message(wa_id, template_name="company_details", code="ru") #TODO: reimplemented DONE
+        
+        if payload == 'Вакансии':
+            send_vacancies(wa_id)
+
         if payload == 'Помощь':
             send_template_message(wa_id, template_name="help_ru", code="ru")
-        if payload == 'Отправить резюме':
-            send_message(get_text_message_input(wa_id, "Эта опция будет скоро включена"))
+        
+        if payload == 'Отправить резюме': # Doesn't work yet
+            send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
+
             if wa_id not in sessions:
                 sessions[wa_id] = {"responses": {}, "current_step": 0}
             user_session = sessions[wa_id]
             current_step = user_session["current_step"]
-
+        
         if payload == 'Процесс найма':
             send_template_message(wa_id, template_name="hiring_conditions", code="ru")
+        
+        if payload == 'Связаться с HR':
+            send_template_message(wa_id, template_name="help_ru", code="ru")
 
         
     elif message_type == "document":
