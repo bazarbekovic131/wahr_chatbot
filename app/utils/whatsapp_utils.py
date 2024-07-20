@@ -177,7 +177,9 @@ def send_template_message(number, template_name = "hello_world", code = "en-US")
         "template": {"name": f"{template_name}", "language": {"code": f"{code}"}},
     }
     logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
+    
     response = requests.post(url, headers=headers, json=data)
+    log_http_response(response)
     return response
 
 def send_location_message(number, latitude, longitude, name, address):
@@ -199,83 +201,8 @@ def send_location_message(number, latitude, longitude, name, address):
     }
     logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
     response = requests.post(url, headers=headers, json=data)
+    log_http_response(response)
     return response
-
-def test():
-    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
-    headers = {
-        "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
-        "Content-Type": "application/json",
-    }
-    data = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": current_app.config["RECIPIENT_WAID"],
-        "type": "interactive",
-        "interactive": {
-            "type": "list",
-            "header": {
-                "type": "text",
-                "text": "Вакансии"
-            },
-            "body": {
-                "text": "Отлично! У нас есть несколько открытых позиций. Пожалуйста, откройте меню для ознакомления"
-            },
-            "footer": {
-                "text": "Это сообщение отправлено автоматически"
-            },
-            "action": {
-                "sections": [
-                    {
-                        "title": "Доступные вакансии",
-                        "rows": [
-                            {
-                                "id": "1",
-                                "title": "Инженер-строитель",
-                                "description": ""
-                            },
-                            {
-                                "id": "2",
-                                "title": "Прораб",
-                                "description": ""
-                            },
-                            {
-                                "id": "3",
-                                "title": "Архитектор",
-                                "description": ""
-                            },
-                            {
-                                "id": "4",
-                                "title": "Оператор строительной техники",
-                                "description": ""
-                            }
-                        ]
-                    }
-                ],
-                "button": "Выбрать"
-            }
-        }
-    }
-
-    try:
-        response = requests.post(
-            url, data=data, headers=headers, timeout=10
-        )  # 10 seconds timeout as an example
-        response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code
-    except requests.Timeout:
-        logging.error("Timeout occurred while sending message")
-        return jsonify({"status": "error", "message": "Request timed out"}), 408
-    except (
-        requests.RequestException
-    ) as e:  # This will catch any general request exception
-        logging.error(f"Request failed due to: {e}")
-        return jsonify({"status": "error", "message": "Failed to send message"}), 500
-    else:
-        # Process the response as normal
-        log_http_response(response)
-        return response
-
-
 
 ##### Higher level messages ####
 
