@@ -140,7 +140,7 @@ class WADatabase():
             return title
 
         sections = [{
-            "title": "Доступные вакансии",
+            "section_title": "Доступные вакансии",
             "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in vacancies]
         }]
         return sections

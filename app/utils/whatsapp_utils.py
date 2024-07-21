@@ -182,6 +182,48 @@ def send_template_message(number, template_name = "hello_world", code = "en-US")
     log_http_response(response)
     return response
 
+def send_template_message_with_parameters(wa_id, template_name, code, template_data):
+    """
+    Sends a WhatsApp message using a template with dynamic data.
+
+    Args:
+        wa_id (str): The recipient's phone number.
+        template_name (str): The name of the template.
+        code (str): language code
+        template_data (list): A list of dynamic data to replace placeholders.
+
+    Returns:
+        Response: The API response object.
+    """
+
+    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
+    headers = {
+        "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "to": wa_id,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {"code": code},
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": template_data[0]},  # Example for {{1}}
+                        {"type": "text", "text": template_data[1]}   # Example for {{2}}
+                    ]
+                }
+            ]
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    return response
+
 def send_location_message(number, latitude, longitude, name, address):
     url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
     headers = {
@@ -249,22 +291,27 @@ def process_whatsapp_message(body):
 
     sent_answer = False
     if message_type == "text":
-        message_body = message.get("text", {}).get("body", "").lower()    
+        message_body = message.get("text", {}).get("body", "").lower()
+
+        if sessions[wa_id]:
+            current_step = sessions[wa_id]["current_step"]
+            if current_step < len(survey_questions):
+                question_item = survey_questions[current_step]
+                question = question_item['question']
+                data = get_text_message_input(wa_id, question)
+                send_message(data)
         
         if ('ваканс' in message_body or 'работ' in message_body): # list vacancies # This should be deprecated
             send_vacancies(wa_id)
             sent_answer = True
-            # return 1
 
         # if ('социальные льготы' in message_body):
         #     send_social_details(wa_id)
         #     sent_answer = True
-        #     # return 1
 
         if ('резюме' in message_body):
             send_template_message(wa_id, template_name="resume_form", code="ru")
             sent_answer = True
-            # return 1
 
         if not sent_answer:
             vacancies = database.get_vacancies()
@@ -296,12 +343,33 @@ def process_whatsapp_message(body):
             send_template_message(wa_id, template_name="help_ru", code="ru")
         
         if payload == 'Отправить резюме': # Doesn't work yet
-            send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
+            # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
 
             if wa_id not in sessions:
                 sessions[wa_id] = {"responses": {}, "current_step": 0}
+
             user_session = sessions[wa_id]
             current_step = user_session["current_step"]
+            
+            try:
+                question_item = survey_questions[0]
+                question = question_item['question']
+                data = get_text_message_input(wa_id, question)
+                send_message(data)
+            except KeyError:
+                logging.error('No question available for the current step.')
+            except Exception as e:
+                logging.error(f'Error while sending question or updating session: {e}')
+
+            # Update session step
+            try:
+                sessions[wa_id]["current_step"] = current_step + 1
+            except KeyError:
+                logging.error('Session key error while updating the current step.')
+            except Exception as e:
+                logging.error(f'Unexpected error while updating current step: {e}')
+                
+            logging.info(f'User session: {user_session}. Current step: {current_step}')
         
         if payload == 'Процесс найма':
             send_template_message(wa_id, template_name="hiring_conditions", code="ru")
@@ -325,11 +393,6 @@ def process_whatsapp_message(body):
         send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
         logging.info(f"Survey responses for {wa_id}: {user_session['responses']}")
         del sessions[wa_id]
-    
-    # payload = message['button']['payload'] # Access the payload of the button it is like Вакансии or Отправить резюме.
-
-    # TODO: implement custom function here
-    # response = generate_response(message_body)
 
     
 
@@ -351,8 +414,12 @@ def process_whatsapp_message(body):
     # response = generate_ai_response(message_body, wa_id, name)
     # response = process_text(response)
 
-    # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
-    # send_message(data)
-
-
-
+def format_vacancy_message(self, title, requirements, tasks):
+    message = (
+        f"{title}\n"
+        "Требования:\n"
+        f"{requirements.replace('. ', '.\n')}\n"
+        "Задачи:\n"
+        f"{tasks.replace('. ', '.\n')}"
+    )
+    return message
