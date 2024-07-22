@@ -26,14 +26,10 @@ class WADatabase():
             
             cur.execute("""CREATE TABLE IF NOT EXISTS surveys (
                         id SERIAL PRIMARY KEY,
-                        age_group VARCHAR(32),
+                        age INT,
                         production_experience VARCHAR(8),
-                        experience_years VARCHAR(8),
-                        marital_status VARCHAR(8),
-                        children_status VARCHAR(8),
                         completed_survey BOOLEAN,
                         phone VARCHAR(16) UNIQUE NOT NULL,
-                        FOREIGN KEY (phone) REFERENCES users (phone)
                         );""")
 
             create_table_query = '''
@@ -86,9 +82,9 @@ class WADatabase():
             cur.execute(
                 """
                 UPDATE surveys SET 
-                %s = %s
+                {key} = %s
                 WHERE phone = %s;
-                """, (key, text, phone,)
+                """.format(key=key), (phone, text,)
             )
 
             # Check if the record was updated
