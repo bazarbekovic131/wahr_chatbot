@@ -354,8 +354,8 @@ def process_whatsapp_message(body):
             if payload == 'Отправить резюме': # Doesn't work yet
                 # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
 
-                if wa_id not in sessions:
-                    sessions[wa_id] = {"responses": [], "current_step": 0}
+                
+                sessions[wa_id] = {"responses": [], "current_step": 0}
 
                 user_session = sessions[wa_id]
                 current_step = user_session["current_step"]
