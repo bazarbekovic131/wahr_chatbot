@@ -64,7 +64,10 @@ class WADatabase():
             )
             user  = cur.fetchone() # fetch phone number
             cur.close()
-            return user[0] # should return count of users instead of some user variable?
+        
+        if user is None:
+            return False
+        return True
     
     def create_user(self, phone):
         with self.conn.cursor() as cur:
