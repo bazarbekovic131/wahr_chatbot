@@ -293,13 +293,16 @@ def process_whatsapp_message(body):
     if message_type == "text":
         message_body = message.get("text", {}).get("body", "").lower()
 
-        if sessions[wa_id]:
-            current_step = sessions[wa_id]["current_step"]
-            if current_step < len(survey_questions):
-                question_item = survey_questions[current_step]
-                question = question_item['question']
-                data = get_text_message_input(wa_id, question)
-                send_message(data)
+        try:
+            if sessions[wa_id]:
+                current_step = sessions[wa_id]["current_step"]
+                if current_step < len(survey_questions):
+                    question_item = survey_questions[current_step]
+                    question = question_item['question']
+                    data = get_text_message_input(wa_id, question)
+                    send_message(data)
+        except KeyError:
+            logging.info('No such user yet')
         
         if ('ваканс' in message_body or 'работ' in message_body): # list vacancies # This should be deprecated
             send_vacancies(wa_id)
