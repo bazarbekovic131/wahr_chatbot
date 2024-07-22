@@ -415,11 +415,5 @@ def process_whatsapp_message(body):
     # response = process_text(response)
 
 def format_vacancy_message(self, title, requirements, tasks):
-    message = (
-        f"{title}\n"
-        "Требования:\n"
-        f"{requirements.replace('. ', '.\n')}\n"
-        "Задачи:\n"
-        f"{tasks.replace('. ', '.\n')}"
-    )
+    message = ( f"{title}\n" + "Требования:\n" + f"{requirements.replace('. ', '.\n')}\n"+"Задачи:\n" + f"{tasks.replace('. ', '.\n')}")
     return message
