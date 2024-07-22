@@ -29,7 +29,7 @@ class WADatabase():
                         age INT,
                         production_experience VARCHAR(8),
                         completed_survey BOOLEAN,
-                        phone VARCHAR(16) UNIQUE NOT NULL,
+                        phone VARCHAR(16) UNIQUE NOT NULL
                         );""")
 
             create_table_query = '''
