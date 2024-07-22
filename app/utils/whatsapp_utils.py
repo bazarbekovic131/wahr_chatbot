@@ -414,6 +414,6 @@ def process_whatsapp_message(body):
     # response = generate_ai_response(message_body, wa_id, name)
     # response = process_text(response)
 
-def format_vacancy_message(self, title, requirements, tasks):
-    message = ( f"{title}\n" + "Требования:\n" + f"{requirements.replace('. ', '.\n')}\n"+"Задачи:\n" + f"{tasks.replace('. ', '.\n')}")
-    return message
+# def format_vacancy_message(title, requirements, tasks):
+#     message = ( f"{title}\n" + "Требования:\n" + f"{requirements.replace('. ', '.\n')}\n"+"Задачи:\n" + f"{tasks.replace('. ', '.\n')}")
+#     return message
