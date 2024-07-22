@@ -301,7 +301,7 @@ def process_whatsapp_message(body):
         message_body = message.get("text", {}).get("body", "") # answer to the previous question
         if step <= len(survey_questions):
             key = survey_questions[step-1]['key']
-            question = survey_questions[0]['question']
+            question = survey_questions[step-1]['question']
             data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
             database.increment_step(wa_id)
             database.save_survey_results(wa_id, key, message_body)
