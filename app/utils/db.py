@@ -84,7 +84,7 @@ class WADatabase():
                 UPDATE surveys SET 
                 {key} = %s
                 WHERE phone = %s;
-                """.format(key=key), (phone, text,)
+                """.format(key=key), (text, phone,)
             )
 
             # Check if the record was updated
