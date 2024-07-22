@@ -212,10 +212,7 @@ def send_template_message_with_parameters(wa_id, template_name, code, template_d
             "components": [
                 {
                     "type": "body",
-                    "parameters": [
-                        {"type": "text", "text": template_data[0]},  # Example for {{1}}
-                        {"type": "text", "text": template_data[1]}   # Example for {{2}}
-                    ]
+                    "parameters": [{"type":"text", "text":template_data[i]} for i in range(len(template_data))]
                 }
             ]
         }
@@ -291,7 +288,7 @@ def process_whatsapp_message(body):
 
     sent_answer = False
     if message_type == "text":
-        message_body = message.get("text", {}).get("body", "").lower()
+        message_body = message.get("text", {}).get("body", "")
 
         try:
             if sessions[wa_id]:
@@ -304,7 +301,7 @@ def process_whatsapp_message(body):
         except KeyError:
             logging.info('No such user yet')
         
-        if ('ваканс' in message_body or 'работ' in message_body): # list vacancies # This should be deprecated
+        if ('ваканс' in message_body.lower() or 'работ' in message_body.lower()): # list vacancies # This should be deprecated
             send_vacancies(wa_id)
             sent_answer = True
 
@@ -312,9 +309,9 @@ def process_whatsapp_message(body):
         #     send_social_details(wa_id)
         #     sent_answer = True
 
-        if ('резюме' in message_body):
-            send_template_message(wa_id, template_name="resume_form", code="ru")
-            sent_answer = True
+        # if ('резюме' in message_body):
+        #     send_template_message(wa_id, template_name="resume_form", code="ru")
+        #     sent_answer = True
 
         if not sent_answer:
             vacancies = database.get_vacancies()
@@ -357,7 +354,7 @@ def process_whatsapp_message(body):
             try:
                 question_item = survey_questions[0]
                 question = question_item['question']
-                data = get_text_message_input(wa_id, question)
+                data = get_text_message_input(current_app.config['RECIPIENT_WAID'], question)
                 send_message(data)
             except KeyError:
                 logging.error('No question available for the current step.')
