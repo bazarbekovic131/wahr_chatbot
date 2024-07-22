@@ -145,7 +145,7 @@ def send_message(data):
     }
 
     url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
-    
+
     logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
     try:
         response = requests.post(
@@ -288,19 +288,27 @@ def process_whatsapp_message(body):
     interactive = None
 
     sent_answer = False
+
+    if wa_id in sessions:
+        user_session = sessions[wa_id] # retrieve the session
+        current_step = sessions[wa_id]['current_step']
+
+        if current_step < len(survey_questions):
+            question_item = survey_questions[current_step]
+
+            key_of_previous_answer = survey_questions[current_step - 1]['key']
+            user_session["responses"].append({"text": message_body, "key": key_of_previous_answer})
+            user_session['current_step'] += 1
+            question = question_item['question']
+
+            data = get_text_message_input(wa_id, question)
+            send_message(data)
+        else:
+            send_message(get_text_message_input(current_app.config['RECIPIENT_WAID'], sessions[wa_id]))
+            del sessions[wa_id]
+
     if message_type == "text":
         message_body = message.get("text", {}).get("body", "")
-
-        try:
-            if sessions[wa_id]:
-                current_step = sessions[wa_id]["current_step"]
-                if current_step < len(survey_questions):
-                    question_item = survey_questions[current_step]
-                    question = question_item['question']
-                    data = get_text_message_input(wa_id, question)
-                    send_message(data)
-        except KeyError:
-            logging.info('No such user yet')
         
         if ('ваканс' in message_body.lower() or 'работ' in message_body.lower()): # list vacancies # This should be deprecated
             send_vacancies(wa_id)
@@ -347,7 +355,7 @@ def process_whatsapp_message(body):
             # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
 
             if wa_id not in sessions:
-                sessions[wa_id] = {"responses": {}, "current_step": 0}
+                sessions[wa_id] = {"responses": [], "current_step": 0}
 
             user_session = sessions[wa_id]
             current_step = user_session["current_step"]
@@ -388,7 +396,7 @@ def process_whatsapp_message(body):
 
     elif message_type == "document":
         document_id = message['document']['id']
-        filename = message['document']['filename']
+        # filename = message['document']['filename']
         user_session["responses"].append(document_id)
         # Process the CV document if needed
         send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
