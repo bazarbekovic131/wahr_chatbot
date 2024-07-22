@@ -306,102 +306,102 @@ def process_whatsapp_message(body):
         else:
             send_message(get_text_message_input(current_app.config['RECIPIENT_WAID'], sessions[wa_id]))
             del sessions[wa_id]
-
-    if message_type == "text":
-        message_body = message.get("text", {}).get("body", "")
-        
-        if ('ваканс' in message_body.lower() or 'работ' in message_body.lower()): # list vacancies # This should be deprecated
-            send_vacancies(wa_id)
-            sent_answer = True
-
-        # if ('социальные льготы' in message_body):
-        #     send_social_details(wa_id)
-        #     sent_answer = True
-
-        # if ('резюме' in message_body):
-        #     send_template_message(wa_id, template_name="resume_form", code="ru")
-        #     sent_answer = True
-
-        if not sent_answer:
-            vacancies = database.get_vacancies()
-            for idx, vacancy_title in vacancies: # vacancy details
-                if vacancy_title.lower() in message_body:
-                    vacancy = database.get_vacancy_details(idx)
-                    # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
-                    # send_message(data)
-                    send_vacancy_details(wa_id, vacancy)
-                    sent_answer = True
-                    break
-
-        if not sent_answer:
-            logging.info("Trying to send a template message")
-            res = send_template_message(wa_id, template_name="greeting", code="ru")
-            logging.info(f'Response: {res}')
+    else:
+        if message_type == "text":
+            message_body = message.get("text", {}).get("body", "")
             
-    elif message_type == "button":
-        payload = message.get("button", {}).get("payload", "")
-        
-        if payload == 'О нас':
-            send_template_message(wa_id, template_name="company_details", code="ru") #TODO: reimplemented DONE
-        
-        if payload == 'Вакансии':
-            logging.info('Vacancies Payload Reached. Trying to send interactive message')
-            send_vacancies(wa_id)
+            if ('ваканс' in message_body.lower() or 'работ' in message_body.lower()): # list vacancies # This should be deprecated
+                send_vacancies(wa_id)
+                sent_answer = True
 
-        if payload == 'Помощь':
-            send_template_message(wa_id, template_name="help_ru", code="ru")
-        
-        if payload == 'Отправить резюме': # Doesn't work yet
-            # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
+            # if ('социальные льготы' in message_body):
+            #     send_social_details(wa_id)
+            #     sent_answer = True
 
-            if wa_id not in sessions:
-                sessions[wa_id] = {"responses": [], "current_step": 0}
+            # if ('резюме' in message_body):
+            #     send_template_message(wa_id, template_name="resume_form", code="ru")
+            #     sent_answer = True
 
-            user_session = sessions[wa_id]
-            current_step = user_session["current_step"]
-            
-            try:
-                question_item = survey_questions[0]
-                question = question_item['question']
-                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
-                send_message(data)
-            except KeyError:
-                logging.error('No question available for the current step.')
-            except Exception as e:
-                logging.error(f'Error while sending question or updating session: {e}')
+            if not sent_answer:
+                vacancies = database.get_vacancies()
+                for idx, vacancy_title in vacancies: # vacancy details
+                    if vacancy_title.lower() in message_body:
+                        vacancy = database.get_vacancy_details(idx)
+                        # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
+                        # send_message(data)
+                        send_vacancy_details(wa_id, vacancy)
+                        sent_answer = True
+                        break
 
-            # Update session step
-            try:
-                sessions[wa_id]["current_step"] = current_step + 1
-            except KeyError:
-                logging.error('Session key error while updating the current step.')
-            except Exception as e:
-                logging.error(f'Unexpected error while updating current step: {e}')
+            if not sent_answer:
+                logging.info("Trying to send a template message")
+                res = send_template_message(wa_id, template_name="greeting", code="ru")
+                logging.info(f'Response: {res}')
                 
-            logging.info(f'User session: {user_session}. Current step: {current_step}')
-        
-        if payload == 'Процесс найма':
-            send_template_message(wa_id, template_name="hiring_conditions", code="ru")
-        
-        if payload == 'Связаться с HR':
-            send_template_message(wa_id, template_name="help_ru", code="ru")
+        elif message_type == "button":
+            payload = message.get("button", {}).get("payload", "")
+            
+            if payload == 'О нас':
+                send_template_message(wa_id, template_name="company_details", code="ru") #TODO: reimplemented DONE
+            
+            if payload == 'Вакансии':
+                logging.info('Vacancies Payload Reached. Trying to send interactive message')
+                send_vacancies(wa_id)
 
-    elif message_type == 'interactive':
-        interactive = message.get("interactive", {})
-        interactive_type = interactive.get("type", "")
-        if interactive_type == 'list_reply':
-            vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
-            vacancy = database.get_vacancy_details(vacancy_id)
-            send_vacancy_details(wa_id, vacancy)
+            if payload == 'Помощь':
+                send_template_message(wa_id, template_name="help_ru", code="ru")
+            
+            if payload == 'Отправить резюме': # Doesn't work yet
+                # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
 
-    elif message_type == "document":
-        document_id = message['document']['id']
-        # filename = message['document']['filename']
-        user_session["responses"].append(document_id)
-        # Process the CV document if needed
-        send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
-        logging.info(f"Survey responses for {wa_id}: {user_session['responses']}")
-        del sessions[wa_id]
+                if wa_id not in sessions:
+                    sessions[wa_id] = {"responses": [], "current_step": 0}
+
+                user_session = sessions[wa_id]
+                current_step = user_session["current_step"]
+                
+                try:
+                    question_item = survey_questions[0]
+                    question = question_item['question']
+                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+                    send_message(data)
+                except KeyError:
+                    logging.error('No question available for the current step.')
+                except Exception as e:
+                    logging.error(f'Error while sending question or updating session: {e}')
+
+                # Update session step
+                try:
+                    sessions[wa_id]["current_step"] = current_step + 1
+                except KeyError:
+                    logging.error('Session key error while updating the current step.')
+                except Exception as e:
+                    logging.error(f'Unexpected error while updating current step: {e}')
+                    
+                logging.info(f'User session: {user_session}. Current step: {current_step}')
+            
+            if payload == 'Процесс найма':
+                send_template_message(wa_id, template_name="hiring_conditions", code="ru")
+            
+            if payload == 'Связаться с HR':
+                send_template_message(wa_id, template_name="help_ru", code="ru")
+
+        elif message_type == 'interactive':
+            interactive = message.get("interactive", {})
+            interactive_type = interactive.get("type", "")
+            if interactive_type == 'list_reply':
+                vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
+                vacancy = database.get_vacancy_details(vacancy_id)
+                send_vacancy_details(wa_id, vacancy)
+
+        elif message_type == "document":
+            document_id = message['document']['id']
+            # filename = message['document']['filename']
+            user_session["responses"].append(document_id)
+            # Process the CV document if needed
+            send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
+            logging.info(f"Survey responses for {wa_id}: {user_session['responses']}")
+            del sessions[wa_id]
 
     
 
