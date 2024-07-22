@@ -10,10 +10,8 @@ import os
 from .db import WADatabase
 import re
 
-from app import sessions
-
 load_dotenv()
-
+global sessions
 db_config = {
     'host': os.getenv("DBHOST"),
     'database': os.getenv("DBNAME"),
@@ -354,7 +352,9 @@ def process_whatsapp_message(body):
             
             if payload == 'Отправить резюме': # Doesn't work yet
                 # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
-
+                if not sessions:
+                    # In-memory session storage
+                    sessions = {}
                 
                 sessions[wa_id] = {"responses": [], "current_step": 0}
 
