@@ -145,7 +145,8 @@ def send_message(data):
     }
 
     url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
-
+    
+    logging.info(f'POST data: URL {url}\n headers: {headers}\n data: {data}')
     try:
         response = requests.post(
             url, data=data, headers=headers, timeout=10
@@ -354,7 +355,7 @@ def process_whatsapp_message(body):
             try:
                 question_item = survey_questions[0]
                 question = question_item['question']
-                data = get_text_message_input(current_app.config['RECIPIENT_WAID'], question)
+                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
                 send_message(data)
             except KeyError:
                 logging.error('No question available for the current step.')
