@@ -296,7 +296,7 @@ def process_whatsapp_message(body):
         database.create_user(wa_id) # CREATE A USER
 
     survey_mode, step = database.filling_a_survey(wa_id)
-
+    logging.info(f'survey mode is {survey_mode} and step is {step}')
     if survey_mode == True:
         message_body = message.get("text", {}).get("body", "") # answer to the previous question
         if step <= len(survey_questions):
