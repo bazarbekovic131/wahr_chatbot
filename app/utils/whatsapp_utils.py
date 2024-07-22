@@ -10,6 +10,8 @@ import os
 from .db import WADatabase
 import re
 
+from app import sessions
+
 load_dotenv()
 
 db_config = {
@@ -29,8 +31,7 @@ survey_questions = [
     {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
 ]
 
-# In-memory session storage
-sessions = {}
+
 
 def is_valid_whatsapp_message(body):
     """
