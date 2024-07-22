@@ -364,11 +364,8 @@ def process_whatsapp_message(body):
     elif message_type == "document":
         document_id = message['document']['id']
         # filename = message['document']['filename']
-        user_session["responses"].append(document_id)
         # Process the CV document if needed
         send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
-        logging.info(f"Survey responses for {wa_id}: {user_session['responses']}")
-        del sessions[wa_id]
 
     
 
