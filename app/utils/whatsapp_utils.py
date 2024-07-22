@@ -24,9 +24,10 @@ database = WADatabase(db_config)
 # Example survey questions with JSON keys
 survey_questions = [
     {"question": "Как вас зовут?", "key": "name"},
-    {"question": "Сколько вам лет?", "key": "email"},
+    {"question": "Сколько вам лет?", "key": "age"},
     {"question": "На какую вакансию вы хотите устроиться?", "key": "vacancy"},
-    {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
+    {"question": "Какой у вас опыт работы?", "key": "production_experience"},
+    # {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
 ]
 
 
@@ -288,7 +289,26 @@ def process_whatsapp_message(body):
 
     sent_answer = False
 
-    if message_type == "text":
+    if wa_id not in database.get_user(wa_id):
+        database.create_user(wa_id) # CREATE A USER
+
+    survey_mode, step = database.filling_a_survey(wa_id)
+
+    if survey_mode == True:
+        message_body = message.get("text", {}).get("body", "") # answer to the previous question
+        if step <= len(survey_questions):
+            key = survey_questions[step-1]['key']
+            question = survey_questions[0]['question']
+            data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+            database.increment_step(wa_id)
+            database.save_survey_results(wa_id, key, message_body)
+        else:
+            database.set_survey_mode(wa_id, value=False)
+            data = get_text_message_input(current_app.config["RECIPIENT_WAID"], "saved?")
+        send_message(data)
+
+
+    if message_type == "text" and not survey_mode:
         message_body = message.get("text", {}).get("body", "")
         
         if ('ваканс' in message_body.lower() or 'работ' in message_body.lower()): # list vacancies # This should be deprecated
@@ -334,18 +354,17 @@ def process_whatsapp_message(body):
         
         if payload == 'Отправить резюме': # Doesn't work yet
             # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
-            
+
             try:
-                question_item = survey_questions[0]
-                question = question_item['question']
+                question = survey_questions[0]['question']
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+                database.increment_step(wa_id)
+                database.set_survey_mode(wa_id, True)
                 send_message(data)
             except KeyError:
                 logging.error('No question available for the current step.')
             except Exception as e:
                 logging.error(f'Error while sending question or updating session: {e}')
-
-
         
         if payload == 'Процесс найма':
             send_template_message(wa_id, template_name="hiring_conditions", code="ru")

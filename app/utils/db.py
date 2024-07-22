@@ -21,7 +21,7 @@ class WADatabase():
             cur.execute("""CREATE TABLE IF NOT EXISTS users (
                         id SERIAL PRIMARY KEY,
                         phone VARCHAR(32) UNIQUE NOT NULL,
-                        has_completed_survey BOOLEAN DEFAULT FALSE
+                        has_completed_survey BOOLEAN REFERENCES surveys (completed_survey)
                         );""")
             
             cur.execute("""CREATE TABLE IF NOT EXISTS surveys (
@@ -80,27 +80,55 @@ class WADatabase():
                 print(f"Error inserting user: {e}")
                 # logging.info(f'Error inserting a user: {e}')
 
-    def save_survey_results(self, phone, results):
-        with self.conn.cursor() as cur: # in the table surveys
+    def save_survey_results(self, phone, key, text):
+        with self.conn.cursor() as cur:
+            # First try to update the record
             cur.execute(
                 """
-                    UPDATE surveys SET 
-                    age_group = %s,
-                    production_experience = %s,
-                    experience_years = %s,
-                    marital_status = %s,
-                    children_status = %s,
-                    completed_survey = TRUE
-                    WHERE phone = %s
-                """, (results['age_group'], results['production_experience'], results['experience_years'], results['marital_status'], results['children_status'], phone )
+                UPDATE surveys SET 
+                %s = %s
+                WHERE phone = %s;
+                """, (key, text, phone)
             )
-            cur.execute("UPDATE users SET has_completed_survey = TRUE WHERE phone = %s", (phone,))
+
+            # Check if the record was updated
+            if cur.rowcount == 0:
+                # If no rows were updated, insert a new record
+                cur.execute(
+                    """
+                    INSERT INTO surveys (phone, {key})
+                    VALUES (%s, %s)
+                    """.format(key=key), (phone, text)
+                )
+
+            # Commit the transaction
+            self.conn.commit()
 
     def has_completed_survey(self, phone):
         with self.conn.cursor() as cur:
             cur.execute("SELECT has_completed_survey FROM users WHERE phone = %s", (phone,))
             result = cur.fetchone()
-            return result and result[0]
+            return result
+        
+    def filling_a_survey(self, phone):
+        '''
+        returns state and step
+        '''
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT survey_mode, current_step FROM users WHERE phone = %s", (phone,))
+            isSurveying, step = cur.fetchone()
+            return isSurveying, step
+        
+    def increment_step(self, phone):
+        with self.conn.cursor() as cur:
+            cur.execute("UPDATE users SET current_step = current_step + 1 WHERE phone = %s;" (phone))
+            self.conn.commit()
+
+    def set_survey_mode(self, phone, value):
+        ''' value is True or False'''
+        with self.conn.cursor() as cur:
+            cur.execute("UPDATE users SET survey_mode = %s WHERE phone = %s;" (value, phone))
+            self.conn.commit()  # Commit the transaction            
 
     ######## VACANCIES ##############
 
