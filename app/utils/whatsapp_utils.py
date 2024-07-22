@@ -289,7 +289,9 @@ def process_whatsapp_message(body):
 
     sent_answer = False
 
-    if wa_id not in database.get_user(wa_id):
+    db_user = database.get_user(wa_id)
+    logging.info(f'Is the user with waid {wa_id} in the DB? Answer: {db_user}')
+    if db_user == None:
         database.create_user(wa_id) # CREATE A USER
 
     survey_mode, step = database.filling_a_survey(wa_id)

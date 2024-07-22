@@ -70,6 +70,7 @@ class WADatabase():
         with self.conn.cursor() as cur:
             try:
                 cur.execute("INSERT INTO users (phone) VALUES (%s) ON CONFLICT (phone) DO NOTHING", (phone,))
+                cur.execute("INSERT INTO surveys (phone, completed_survey) VALUES (%s, FALSE) ON CONFLICT (phone) DO NOTHING", (phone,))
                 self.conn.commit()
             except Exception as e:
                 self.conn.rollback()
