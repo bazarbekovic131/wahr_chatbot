@@ -64,7 +64,7 @@ class WADatabase():
             )
             user  = cur.fetchone() # fetch phone number
             cur.close()
-            return user # should return count of users instead of some user variable?
+            return user[0] # should return count of users instead of some user variable?
     
     def create_user(self, phone):
         with self.conn.cursor() as cur:
@@ -104,7 +104,7 @@ class WADatabase():
         with self.conn.cursor() as cur:
             cur.execute("SELECT has_completed_survey FROM users WHERE phone = %s", (phone,))
             result = cur.fetchone()
-            return result
+            return result[0]
         
     def filling_a_survey(self, phone):
         '''
