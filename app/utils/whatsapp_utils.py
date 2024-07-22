@@ -292,7 +292,7 @@ def process_whatsapp_message(body):
     if wa_id in sessions:
         user_session = sessions[wa_id] # retrieve the session
         current_step = sessions[wa_id]['current_step']
-
+        message_body = message.get("text", {}).get("body", "") # Answer to previous one
         if current_step < len(survey_questions):
             question_item = survey_questions[current_step]
 
