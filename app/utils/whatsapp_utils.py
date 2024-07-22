@@ -298,15 +298,18 @@ def process_whatsapp_message(body):
     survey_mode, step = database.filling_a_survey(wa_id)
     logging.info(f'survey mode is {survey_mode} and step is {step}')
     if survey_mode == True:
-        message_body = message.get("text", {}).get("body", "") # answer to the previous question
-        if step <= len(survey_questions):
+        if step <= len(survey_questions)+1:
+            message_body = message.get("text", {}).get("body", "") # answer to the previous question
             key = survey_questions[step-1]['key']
             question = survey_questions[step-1]['question']
             data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
             database.increment_step(wa_id)
             database.save_survey_results(wa_id, key, message_body)
         else:
+            # handle receiving a document    
+
             database.set_survey_mode(wa_id, value=False)
+            database.has_completed_survey(wa_id) # this should mark it as completed for the user
             data = get_text_message_input(current_app.config["RECIPIENT_WAID"], "saved?")
         send_message(data)
 
@@ -361,7 +364,7 @@ def process_whatsapp_message(body):
             try:
                 question = survey_questions[0]['question']
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
-                database.increment_step(wa_id)
+                database.set_step(wa_id) # sets to 1
                 database.set_survey_mode(wa_id, True)
                 send_message(data)
             except KeyError:

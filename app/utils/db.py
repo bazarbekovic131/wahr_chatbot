@@ -124,6 +124,11 @@ class WADatabase():
             cur.execute("UPDATE users SET current_step = current_step + 1 WHERE phone = %s;", (phone,))
             self.conn.commit()
 
+    def increment_step(self, phone):
+        with self.conn.cursor() as cur:
+            cur.execute("UPDATE users SET current_step =  1 WHERE phone = %s;", (phone,))
+            self.conn.commit()
+
     def set_survey_mode(self, phone, value):
         ''' value is True or False'''
         with self.conn.cursor() as cur:
