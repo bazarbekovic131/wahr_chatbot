@@ -502,7 +502,7 @@ def process_whatsapp_message(body):
             try:
                 vacancy_id = int(interactive.get("button_reply", {}).get("id", ""))
                 vacancy = database.get_vacancy_details(vacancy_id)
-                database.save_vacancy(wa_id, vacancy_id[0])
+                database.save_vacancy(wa_id, vacancy_id)
 
                 question = survey_questions[0]['question']
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
