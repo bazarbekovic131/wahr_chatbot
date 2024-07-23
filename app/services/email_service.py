@@ -161,4 +161,3 @@ def mailmain():
                     os.remove(zip_path) # clean up after sending
                 else:
                     send_email(email, subject, body)
-        time.sleep(3 * 24 * 3600) # 3 дня
