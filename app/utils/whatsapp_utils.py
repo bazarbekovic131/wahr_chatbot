@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 # from app.services.openai_service import generate_ai_ response
-# from app.services.email_service import send_email_with_resume
+
 from .db import WADatabase
 import re
 
