@@ -383,6 +383,7 @@ def process_whatsapp_message(body):
             message_body = message.get("text", {}).get("body", "") # answer to the previous question
             key = survey_questions[step-1]['key']
             
+            logging.info(f'Key: {key}, vacancy_filled: {vacancy_filled}')
             if key == 'vacancy' and (vacancy_filled != False):
                 # skip the vacancy question if it was filled
                 step += 1
