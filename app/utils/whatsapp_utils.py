@@ -375,10 +375,10 @@ def process_whatsapp_message(body):
     survey_mode, step = database.filling_a_survey(wa_id)
     logging.info(f'survey mode is {survey_mode} and step is {step}')
     if survey_mode == True:
-        if step <= len(survey_questions):
+        if step < len(survey_questions):
             message_body = message.get("text", {}).get("body", "") # answer to the previous question
             key = survey_questions[step-1]['key']
-            question = survey_questions[step-1]['question']
+            question = survey_questions[step]['question']
             data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
             database.increment_step(wa_id)
             database.save_survey_results(wa_id, key, message_body)
@@ -508,9 +508,6 @@ def process_whatsapp_message(body):
             data = get_text_message_input(current_app.config["RECIPIENT_WAID"], error)
             send_message(data)
             return jsonify({"status": "error", "message": str(e)}), 500
-
-        data = get_text_message_input(current_app.config["RECIPIENT_WAID"], f"Мы сохранили ваши данные!Путь: {file_path}")
-        send_message(data)
     
 
 
