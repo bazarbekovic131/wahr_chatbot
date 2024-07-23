@@ -348,7 +348,7 @@ def send_vacancy_details(wa_id, vacancy):
     body_text = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}' #TODO: add new columns i guess
     footer_text = ""
 
-    data = create_button_interactive_json(header_text, body_text, footer_text, body_text="Откликнуться")
+    data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться")
     send_interactive(wa_id, data)
 
 def process_whatsapp_message(body):
