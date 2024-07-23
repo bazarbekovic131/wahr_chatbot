@@ -214,15 +214,4 @@ class WADatabase():
         query = """
             SELECT * FROM surveys WHERE sent = FALSE;
         """
-        return pd.read_sql_query(query, self.conn)
-
-    def get_resumes_older_than(self, days):
-        with self.connection.cursor() as cursor:
-            query = """
-                SELECT user_phone, user_address, resume_filename, resume_data
-                FROM resumes
-                WHERE created_at <= NOW() - INTERVAL '%s days'
-                AND sent = FALSE
-            """
-            cursor.execute(query, (days,))
-            return cursor.fetchall()
+        return pd.read_sql_query(query, self.conn) # check this TODO

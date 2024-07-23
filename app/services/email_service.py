@@ -5,6 +5,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 import os
 from dotenv import load_dotenv
+from app.utils.db import WADatabase
 
 load_dotenv()
 
