@@ -382,9 +382,8 @@ def process_whatsapp_message(body):
         if step < len(survey_questions):
             message_body = message.get("text", {}).get("body", "") # answer to the previous question
             key = survey_questions[step-1]['key']
-            
             logging.info(f'Key: {key}, vacancy_filled: {vacancy_filled}')
-            if key == 'vacancy' and (vacancy_filled == True):
+            if key == 'age' and (vacancy_filled == True): # age precedes vacancy IMPORTANT 
                 # skip the vacancy question if it was filled
                 step += 1
                 database.increment_step(wa_id)
