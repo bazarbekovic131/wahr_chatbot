@@ -183,7 +183,7 @@ class WADatabase():
             df = cursor.fetchone()
             return df
         
-    # TODO: add pagination of vacancies by 10
+    # TODO: add pagination of vacancies by 10 MARK: DONE!
     def get_vacancies_for_interactive_message(self):
         vacancies = self.get_vacancies()
         def shorten_title(title, max_length=24):
@@ -197,20 +197,23 @@ class WADatabase():
             Returns:
                 str: The shortened title.
             """
-
             if len(title) > max_length:
                 return title[:max_length]  # Truncate the title to the max length
             return title
 
-        sections = [{
-            "title": "Доступные вакансии",
-            "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in vacancies]
-        }]
+        sections = []
+        max_rows_per_section = 10
+        for i in range(0, len(vacancies), max_rows_per_section):
+            section_vacancies = vacancies[i:i + max_rows_per_section]
+            section = {
+                "title": f"Доступные вакансии - Страница {i // max_rows_per_section + 1}",
+                "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in section_vacancies]
+            }
+            sections.append(section)
+        
         return sections
-    
 
-    # these functions need to be altered
-
+    # new ones. untested
     def get_incomplete_surveys(self):
         query = """
             SELECT * FROM surveys WHERE sent = FALSE;
