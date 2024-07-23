@@ -139,7 +139,7 @@ class WADatabase():
         ''' value is True or False'''
         with self.conn.cursor() as cur:
             cur.execute("UPDATE users SET has_completed_survey = %s WHERE phone = %s;", (isCompleted, phone,))
-            cur.execute("UPDATE surveys SET has_completed_survey = %s WHERE phone = %s;", (isCompleted, phone,))
+            cur.execute("UPDATE surveys SET completed_survey = %s WHERE phone = %s;", (isCompleted, phone,))
             self.conn.commit()  # Commit the transaction 
 
     ######## VACANCIES ##############
