@@ -27,7 +27,7 @@ survey_questions = [
     {"question": "Сколько вам лет?", "key": "age"},
     {"question": "На какую вакансию вы хотите устроиться?", "key": "vacancy"},
     {"question": "Какой у вас опыт работы?", "key": "production_experience"},
-    {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
+    {"question": "Пожалуйста, загрузите ваше резюме. Если у Вас его нет, напишите \"Нет\".", "key": "resume"}
 ]
 
 
@@ -394,16 +394,17 @@ def process_whatsapp_message(body):
             database.save_survey_results(wa_id, key, message_body)
         else:
             # handle receiving a document    
+            key = survey_questions[step-1]['key']
             if message_type == 'document':
                 database.set_survey_mode(wa_id, value=False)
                 database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=True) # this should mark it as completed for the user
 
                 document_id = message['document']['id']
                 filename = message['document']['filename'].replace(' ', '_')
-
                 try:
                     document_data = fetch_media_data(document_id)
                     file_path = get_file(document_data['url'], filename)
+                    database.save_survey_results(wa_id, key, file_path)
                 except Exception as e:
                     error = f'Ошибка при обработке отправленного документа: {e}'
                     logging.error(error)
@@ -412,7 +413,14 @@ def process_whatsapp_message(body):
                     return jsonify({"status": "error", "message": str(e)}), 500
 
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], "Мы сохранили ваши данные!")
-
+            elif message_type == 'text':
+                message_body = message.get("text", {}).get("body", "")
+                if message_body != 'Нет':
+                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Пожалуйста, отправьте файл в качестве ответа. Если вы желаете не указывать резюме, напишите "Нет".')
+                else:
+                    database.set_survey_mode(wa_id, value=False)
+                    database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=True) # this should mark it as completed for the user
+                    database.save_survey_results(wa_id, key, "Не указан")
             else:
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Пожалуйста, отправьте файл в качестве ответа.')
         send_message(data)
