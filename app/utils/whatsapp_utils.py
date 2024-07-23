@@ -152,10 +152,12 @@ def create_interactive_json(header_text, body_text, footer_text, button_text, se
     
     return interactive_json
 
-def create_button_interactive_json(header_text, body_text, footer_text, button_text):
+def create_button_interactive_json(header_text, body_text, footer_text, button_text, id):
     '''
      Версия interactive сообщения ( с кнопками вместо списка )
      Можно добавить максимум 3 кнопки
+
+     id - id of the vacancy
     '''
 
     json = {
@@ -174,7 +176,7 @@ def create_button_interactive_json(header_text, body_text, footer_text, button_t
                     {
                         "type": "reply",
                         "reply": {
-                            "id": "123",
+                            "id": id,
                             "title": button_text
                         }
                     }
@@ -337,7 +339,7 @@ def send_vacancies(wa_id):
     send_interactive(wa_id, data)
 
 # Should send a vacancy details
-def send_vacancy_details(wa_id, vacancy):
+def send_vacancy_details(wa_id, vacancy, vacancy_id):
     '''
     input - wa_id - is the whats app id of the recipient, in the format +77777777 (KZ)
     vacancy - it is an array fetched from the database by the script
@@ -348,7 +350,7 @@ def send_vacancy_details(wa_id, vacancy):
     body_text = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}' #TODO: add new columns i guess
     footer_text = ""
 
-    data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться")
+    data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться", id = vacancy_id)
     send_interactive(wa_id, data)
 
 def process_whatsapp_message(body):
@@ -374,10 +376,18 @@ def process_whatsapp_message(body):
 
     survey_mode, step = database.filling_a_survey(wa_id)
     logging.info(f'survey mode is {survey_mode} and step is {step}')
+    vacancy_filled = database.vacancy_filled(wa_id) # true or false
+
     if survey_mode == True:
         if step < len(survey_questions):
             message_body = message.get("text", {}).get("body", "") # answer to the previous question
             key = survey_questions[step-1]['key']
+            
+            if key == 'vacancy' and (vacancy_filled != False):
+                # skip the vacancy question if it was filled
+                step += 1
+                database.increment_step(wa_id)
+
             question = survey_questions[step]['question']
             data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
             database.increment_step(wa_id)
@@ -479,9 +489,13 @@ def process_whatsapp_message(body):
         if interactive_type == 'list_reply':
             vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
             vacancy = database.get_vacancy_details(vacancy_id)
-            send_vacancy_details(wa_id, vacancy)
+            send_vacancy_details(wa_id, vacancy, vacancy_id)
         elif interactive_type == 'button_reply':
             try:
+                vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
+                vacancy = database.get_vacancy_details(vacancy_id)
+                database.save_vacancy(wa_id, vacancy_id[0])
+
                 question = survey_questions[0]['question']
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
                 database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)

@@ -26,32 +26,22 @@ class WADatabase():
             
             cur.execute("""CREATE TABLE IF NOT EXISTS surveys (
                         id SERIAL PRIMARY KEY,
-                        age INT,
-                        production_experience VARCHAR(8),
-                        completed_survey BOOLEAN,
                         phone VARCHAR(16) UNIQUE NOT NULL
+                        age INT,
+                        production_experience VARCHAR(32),
+                        completed_survey BOOLEAN,
+                        sent BOOLEAN DEFAULT FALSE,
                         );""")
 
             create_table_query = '''
                         CREATE TABLE IF NOT EXISTS vacancies (
-                            id SERIAL PRIMARY KEY,
-                            title VARCHAR(255) NOT NULL,
-                            requirements TEXT,
-                            details TEXT,
-                            tasks TEXT
-                            );'''
+                        id SERIAL PRIMARY KEY,
+                        title VARCHAR(255) NOT NULL,
+                        requirements TEXT,
+                        details TEXT,
+                        tasks TEXT
+                        );'''
             cur.execute(create_table_query)
-
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS resumes (
-                    id SERIAL PRIMARY KEY,
-                    user_phone VARCHAR(20),
-                    resume_filename VARCHAR(255),
-                    resume_data BYTEA,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    sent BOOLEAN DEFAULT FALSE
-                );
-            ''')
 
             self.conn.commit()
 
@@ -104,6 +94,34 @@ class WADatabase():
             # Commit the transaction
             self.conn.commit()
 
+    def save_vacancy(self, phone, vacancy_name):
+        with self.conn.cursor() as cur:
+            # First try to update the record
+            cur.execute(
+                """
+                UPDATE surveys SET 
+                vacancy = %s
+                WHERE phone = %s;
+                """, (vacancy_name, phone,)
+            )
+
+            if cur.rowcount == 0:
+                # If no rows were updated, insert a new record
+                cur.execute(
+                    """
+                    INSERT INTO surveys (phone, vacancy)
+                    VALUES (%s, %s)
+                    """, (phone, vacancy_name,)
+                )
+
+            # Commit the transaction
+            self.conn.commit()
+    def vacancy_filled(self, phone):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT vacancy FROM surveys WHERE phone = %s", (phone,))
+            result = cur.fetchone()
+            return result is not None
+        
     def has_completed_survey(self, phone):
         with self.conn.cursor() as cur:
             cur.execute("SELECT has_completed_survey FROM users WHERE phone = %s", (phone,))
@@ -155,12 +173,16 @@ class WADatabase():
             return cursor.fetchall()
 
     def get_vacancy_details(self, vacancy_id):
+        '''
+            used in forming the interactive message
+        '''
+
         with self.conn.cursor() as cursor:
             cursor.execute("SELECT title, requirements, details FROM vacancies WHERE id=%s", (vacancy_id,))
             df = cursor.fetchone()
             return df
         
-
+    # TODO: add pagination of vacancies by 10
     def get_vacancies_for_interactive_message(self):
         vacancies = self.get_vacancies()
         def shorten_title(title, max_length=24):
@@ -184,17 +206,15 @@ class WADatabase():
             "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in vacancies]
         }]
         return sections
+    
 
-    def insert_resume(self, user_phone, resume_filename, resume_data):
-        with self.connection.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO resumes (user_phone, resume_filename, resume_data)
-                VALUES (%s, %s, %s)
-                """,
-                (user_phone, resume_filename, resume_data)
-            )
-            self.connection.commit()
+    # these functions need to be altered
+
+    def get_incomplete_surveys(self):
+        query = """
+            SELECT * FROM surveys WHERE sent = FALSE;
+        """
+        return pd.read_sql_query(query, self.conn)
 
     def get_resumes_older_than(self, days):
         with self.connection.cursor() as cursor:
@@ -206,14 +226,3 @@ class WADatabase():
             """
             cursor.execute(query, (days,))
             return cursor.fetchall()
-
-    def mark_resumes_as_sent(self, resumes):
-        with self.connection.cursor() as cursor:
-            query = """
-                UPDATE resumes
-                SET sent = TRUE
-                WHERE id = ANY(%s)
-            """
-            resume_ids = [resume['id'] for resume in resumes]
-            cursor.execute(query, (resume_ids,))
-            self.connection.commit()
