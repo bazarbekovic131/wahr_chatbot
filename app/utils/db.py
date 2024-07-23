@@ -208,7 +208,7 @@ class WADatabase():
         for i in range(0, len(vacancies), max_rows_per_section):
             section_vacancies = vacancies[i:i + max_rows_per_section]
             section = {
-                "title": f"Доступные вакансии - Страница {i // max_rows_per_section + 1}",
+                "title": f"Стр. {i // max_rows_per_section + 1}",
                 "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in section_vacancies]
             }
             sections.append(section)
