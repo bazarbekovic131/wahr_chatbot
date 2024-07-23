@@ -386,7 +386,7 @@ def process_whatsapp_message(body):
             # handle receiving a document    
             if message_type == 'document':
                 database.set_survey_mode(wa_id, value=False)
-                database.has_completed_survey(wa_id) # this should mark it as completed for the user
+                database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=True) # this should mark it as completed for the user
 
                 document_id = message['document']['id']
                 filename = message['document']['filename'].replace(' ', '_')
@@ -458,6 +458,7 @@ def process_whatsapp_message(body):
             try:
                 question = survey_questions[0]['question']
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+                database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
                 database.set_step(wa_id) # sets to 1
                 database.set_survey_mode(wa_id, True)
                 send_message(data)
@@ -483,6 +484,7 @@ def process_whatsapp_message(body):
             try:
                 question = survey_questions[0]['question']
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+                database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
                 database.set_step(wa_id) # sets to 1
                 database.set_survey_mode(wa_id, True)
                 send_message(data)

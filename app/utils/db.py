@@ -135,6 +135,13 @@ class WADatabase():
             cur.execute("UPDATE users SET survey_mode = %s WHERE phone = %s;", (value, phone,))
             self.conn.commit()  # Commit the transaction            
 
+    def mark_survey_as_completed_or_incompleted(self, phone, isCompleted):
+        ''' value is True or False'''
+        with self.conn.cursor() as cur:
+            cur.execute("UPDATE users SET has_completed_survey = %s WHERE phone = %s;", (isCompleted, phone,))
+            cur.execute("UPDATE surveys SET has_completed_survey = %s WHERE phone = %s;", (isCompleted, phone,))
+            self.conn.commit()  # Commit the transaction 
+
     ######## VACANCIES ##############
 
     def get_vacancies(self):
