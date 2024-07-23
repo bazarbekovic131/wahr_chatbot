@@ -220,7 +220,7 @@ class WADatabase():
         with self.conn.cursor() as cur:
             query = 'SELECT * FROM surveys WHERE sent = FALSE;'
             cur.execute(query)
-        df = cur.fetchall()
+            df = cur.fetchall()
         if df is not None:
             return pd.DataFrame(df)
         else:
