@@ -217,10 +217,14 @@ class WADatabase():
 
     # new ones. untested
     def get_incomplete_surveys(self):
-        query = """
-            SELECT * FROM surveys WHERE sent = FALSE;
-        """
-        return pd.read_sql_query(query, self.conn) # check this TODO
+        with self.conn.cursor() as cur:
+            query = 'SELECT * FROM surveys WHERE sent = FALSE;'
+            cur.execute(query)
+        df = cur.fetchall()
+        if df is not None:
+            return pd.DataFrame(df)
+        else:
+            return None
 
     def update_sent_status(self, survey_id):
         query = """
