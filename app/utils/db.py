@@ -26,10 +26,12 @@ class WADatabase():
             
             cur.execute("""CREATE TABLE IF NOT EXISTS surveys (
                         id SERIAL PRIMARY KEY,
-                        phone VARCHAR(16) UNIQUE NOT NULL
-                        age INT,
+                        phone VARCHAR(16) UNIQUE NOT NULL,
+                        age VARCHAR(32),
                         production_experience VARCHAR(32),
                         completed_survey BOOLEAN,
+                        name VARCHAR(50),
+                        vacancy VARCHAR(32),
                         sent BOOLEAN DEFAULT FALSE,
                         resume VARCHAR(32) DEFAULT 'Не указан'
                         );""")

@@ -162,6 +162,3 @@ def mailmain():
                 else:
                     send_email(email, subject, body)
         time.sleep(3 * 24 * 3600) # 3 дня
-
-if __name__ == "__main__":
-    mailmain()
