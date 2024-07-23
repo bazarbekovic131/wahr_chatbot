@@ -384,7 +384,7 @@ def process_whatsapp_message(body):
             key = survey_questions[step-1]['key']
             
             logging.info(f'Key: {key}, vacancy_filled: {vacancy_filled}')
-            if key == 'vacancy' and (vacancy_filled != False):
+            if key == 'vacancy' and (vacancy_filled == True):
                 # skip the vacancy question if it was filled
                 step += 1
                 database.increment_step(wa_id)
