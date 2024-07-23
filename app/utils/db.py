@@ -31,6 +31,7 @@ class WADatabase():
                         production_experience VARCHAR(32),
                         completed_survey BOOLEAN,
                         sent BOOLEAN DEFAULT FALSE,
+                        resume VARCHAR(32) DEFAULT 'Не указан'
                         );""")
 
             create_table_query = '''
@@ -215,3 +216,10 @@ class WADatabase():
             SELECT * FROM surveys WHERE sent = FALSE;
         """
         return pd.read_sql_query(query, self.conn) # check this TODO
+
+    def update_sent_status(self, survey_id):
+        query = """
+            UPDATE surveys SET sent = TRUE WHERE id = %s;
+        """
+        self.conn.cursor().execute(query, (survey_id,))
+        self.conn.commit()

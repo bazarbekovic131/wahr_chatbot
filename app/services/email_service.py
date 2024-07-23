@@ -6,6 +6,9 @@ from email import encoders
 import os
 from dotenv import load_dotenv
 from app.utils.db import WADatabase
+import time
+import zipfile
+from datetime import datetime
 
 load_dotenv()
 
@@ -14,7 +17,17 @@ EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-def send_email_with_resume(to_address, subject, body, attachment_path):
+def create_zip(attachment_paths):
+    zip_name = datetime.strftime # should be a timestamp
+    with zipfile.ZipFile(zip_name, 'w') as zipf:
+        for file in attachment_paths:
+            zipf.write(file, os.path.basename(file))
+    return zip_name
+
+def send_email(to_address, subject, body, attachment_path=None):
+    '''
+        Can send with or without attachment
+    '''
     try:
         # Set up the SMTP server
         server = smtplib.SMTP(host=EMAIL_HOST, port=EMAIL_PORT)
@@ -51,19 +64,40 @@ def send_email_with_resume(to_address, subject, body, attachment_path):
     except Exception as e:
         print(f"Failed to send email: {e}")
 
-def handle_resume_submission(user_phone, user_address, resume_file_path):
-    # Save the resume file in the database
-    with open(resume_file_path, "rb") as file:
-        resume_data = file.read()
-        resume_filename = os.path.basename(resume_file_path)
-        database.insert_resume(user_phone, user_address, resume_filename, resume_data)
-    
-    # Define the recipient email address
-    recipient_email = "bazar.akhmet@gmail.com" #TODO: change to HR email hr@shark.kz
+def mailmain():
+    db_config = {
+        'host': os.getenv("DBHOST"),
+        'database': os.getenv("DBNAME"),
+        'user': os.getenv("DBUSER"),
+        'password': os.getenv("DBPASSWORD"),
+        'port': os.getenv("DBPORT")
+    }
+    database = WADatabase(db_config)
 
-    # Define the email subject and body
-    email_subject = "Отправлено новое резюме"
-    email_body = f"Резюме было отправлено из What's App пользователем с номером: {user_phone}."
+    while True:
+        incomplete_surveys = database.get_incomplete_surveys()
+        if not incomplete_surveys.empty:
+            subject = 'Новые резюме'
+            body = 'На указанный период были получены следующие отклики на вакансии (из What\'s App)' + incomplete_surveys.to_string(index=True)
+            email = 'bazar.akhmet@gmail.com'
+            
+            attachment_paths = []
+            survey_ids = []
 
-    # Send the email with the resume attachment
-    send_email_with_resume(recipient_email, email_subject, email_body, resume_file_path)
+            for index, row in incomplete_surveys.iterrows():
+                resume_path = row['resume']
+                if resume_path and os.path.isfile(resume_path):
+                    attachment_paths.append(resume_path)
+                    survey_ids.append(row['id'])
+                else:
+                    survey_ids.append(row['id'])
+                database.update_sent_status(row['id'])
+
+            if survey_ids:
+                if attachment_paths:
+                    zip_path = create_zip(attachment_paths)
+                    send_email(email, subject, body, zip_path)
+                    os.remove(zip_path) # clean up after sending
+                else:
+                    send_email(email, subject, body)
+        time.sleep(3 * 24 * 3600) # 3 дня
