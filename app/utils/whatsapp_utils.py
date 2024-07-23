@@ -500,7 +500,7 @@ def process_whatsapp_message(body):
             send_vacancy_details(wa_id, vacancy, vacancy_id)
         elif interactive_type == 'button_reply':
             try:
-                vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
+                vacancy_id = int(interactive.get("button_reply", {}).get("id", ""))
                 vacancy = database.get_vacancy_details(vacancy_id)
                 database.save_vacancy(wa_id, vacancy_id[0])
 
