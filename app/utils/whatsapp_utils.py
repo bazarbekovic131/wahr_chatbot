@@ -421,6 +421,7 @@ def process_whatsapp_message(body):
                     database.set_survey_mode(wa_id, value=False)
                     database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=True) # this should mark it as completed for the user
                     database.save_survey_results(wa_id, key, "Не указан")
+                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Ваши данные сохранены. Резюме не указано.')
             else:
                 data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Пожалуйста, отправьте файл в качестве ответа.')
         send_message(data)
