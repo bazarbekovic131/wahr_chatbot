@@ -16,6 +16,3 @@ def create_app():
     app.register_blueprint(webhook_blueprint)
 
     return app
-
-# In-memory session storage
-sessions = {}

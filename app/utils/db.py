@@ -221,10 +221,8 @@ class WADatabase():
             query = 'SELECT * FROM surveys WHERE sent = FALSE;'
             cur.execute(query)
             df = cur.fetchall()
-        if df is not None:
-            return pd.DataFrame(df)
-        else:
-            return None
+        self.conn.commit()
+        return pd.DataFrame(df, columns=['id', 'phone', 'age','sent', 'name', 'completed_survey', 'production_experience', 'resume', 'vacancy'])
 
     def update_sent_status(self, survey_id):
         query = """

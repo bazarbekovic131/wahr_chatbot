@@ -9,13 +9,15 @@ from app.utils.db import WADatabase
 import time
 import zipfile
 from datetime import datetime
-
+import logging
 load_dotenv()
 
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def create_zip(attachment_paths):
     timestamp = datetime.strftime("%Y%m%d%H%M%S") # should be a timestamp
@@ -121,9 +123,9 @@ def send_email(to_address, subject, body, attachment_path=None):
         server.send_message(msg)
         server.quit()
 
-        print("Email sent successfully.")
+        logging.info("Email sent successfully.")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logging.info(f"Failed to send email: {e}")
 
 def mailmain():
     db_config = {
@@ -136,7 +138,9 @@ def mailmain():
     database = WADatabase(db_config)
 
     while True:
+        logging.info("Checking for incomplete surveys.")
         incomplete_surveys = database.get_incomplete_surveys()
+        logging.info(f"Surveys: {incomplete_surveys}")
         if not incomplete_surveys.empty:
             subject = 'Новые резюме'
             email = 'bazar.akhmet@gmail.com'
