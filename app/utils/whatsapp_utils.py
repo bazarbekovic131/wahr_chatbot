@@ -27,15 +27,15 @@ survey_questions = [
     {"question": "Сколько вам лет?", "key": "age"},
     {"question": "На какую вакансию вы хотите устроиться?", "key": "vacancy"},
     {"question": "Какой у вас опыт работы?", "key": "production_experience"},
-    # {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
+    {"question": "Пожалуйста, загрузите ваше резюме.", "key": "resume"}
 ]
 
 
 
 def is_valid_whatsapp_message(body):
-    """
+    '''
     Check if the incoming webhook event has a valid WhatsApp message structure.
-    """
+    '''
     return (
         body.get("object")
         and body.get("entry")
@@ -50,6 +50,49 @@ def log_http_response(response):
     logging.info(f"Status: {response.status_code}")
     logging.info(f"Content-type: {response.headers.get('content-type')}")
     logging.info(f"Body: {response.text}")
+
+
+
+########################    DOWNLOAD DOCUMENTS ############################
+
+def fetch_media_data(media_id):
+    ''' Получение ссылки на документ'''
+
+    url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{media_id}/"
+    
+    headers = {
+        'Authorization': f'Bearer {current_app.config["ACCESS_TOKEN"]}'
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching media data: {e}")
+        raise
+
+def get_file(url, file_name):
+    headers = {
+        'Authorization': f'Bearer {current_app.config["ACCESS_TOKEN"]}'
+    }
+    try:
+        response = requests.get(url, headers=headers, stream=True)
+        response.raise_for_status()
+        downloads_folder = '/home/shark/wahr_chatbot/downloads'
+        file_path = os.path.join(downloads_folder, file_name)
+
+        with open(file_path, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+        logging.info(f"Downloaded file: {file_path}")
+        return file_path
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error downloading file: {e}")
+        raise
+
+
+
 
 # processes OpenAI style text to What's App style text (for AI integration)
 def process_text(text): 
@@ -298,7 +341,7 @@ def process_whatsapp_message(body):
     survey_mode, step = database.filling_a_survey(wa_id)
     logging.info(f'survey mode is {survey_mode} and step is {step}')
     if survey_mode == True:
-        if step <= len(survey_questions)+1:
+        if step <= len(survey_questions):
             message_body = message.get("text", {}).get("body", "") # answer to the previous question
             key = survey_questions[step-1]['key']
             question = survey_questions[step-1]['question']
@@ -307,10 +350,27 @@ def process_whatsapp_message(body):
             database.save_survey_results(wa_id, key, message_body)
         else:
             # handle receiving a document    
+            if message_type == 'document':
+                database.set_survey_mode(wa_id, value=False)
+                database.has_completed_survey(wa_id) # this should mark it as completed for the user
 
-            database.set_survey_mode(wa_id, value=False)
-            database.has_completed_survey(wa_id) # this should mark it as completed for the user
-            data = get_text_message_input(current_app.config["RECIPIENT_WAID"], "saved?")
+                document_id = message['document']['id']
+                filename = message['document']['filename'].replace(' ', '_')
+
+                try:
+                    document_data = fetch_media_data(document_id)
+                    file_path = get_file(document_data['url'], filename)
+                except Exception as e:
+                    error = f'Ошибка при обработке отправленного документа: {e}'
+                    logging.error(error)
+                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], error)
+                    send_message(data)
+                    return jsonify({"status": "error", "message": str(e)}), 500
+
+                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], "Мы сохранили ваши данные!")
+
+            else:
+                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Пожалуйста, отправьте файл в качестве ответа.')
         send_message(data)
 
 
@@ -387,11 +447,25 @@ def process_whatsapp_message(body):
             send_vacancy_details(wa_id, vacancy)
 
     elif message_type == "document":
-        document_id = message['document']['id']
-        # filename = message['document']['filename']
-        # Process the CV document if needed
-        send_template_message(wa_id, template_name="placeholder", code="ru") #TODO:
+        # process the document only if survey mode is enabled.
+        # send_template_message(wa_id, template_name="greeting", code="ru")
 
+        # remove this later
+        document_id = message['document']['id']
+        filename = message['document']['filename'].replace(' ', '_')
+
+        try:
+            document_data = fetch_media_data(document_id)
+            file_path = get_file(document_data['url'], filename)
+        except Exception as e:
+            error = f'Ошибка при обработке отправленного документа: {e}'
+            logging.error(error)
+            data = get_text_message_input(current_app.config["RECIPIENT_WAID"], error)
+            send_message(data)
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+        data = get_text_message_input(current_app.config["RECIPIENT_WAID"], f"Мы сохранили ваши данные!Путь: {file_path}")
+        send_message(data)
     
 
 
