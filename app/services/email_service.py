@@ -18,11 +18,72 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 def create_zip(attachment_paths):
-    zip_name = datetime.strftime # should be a timestamp
+    timestamp = datetime.strftime("%Y%m%d%H%M%S") # should be a timestamp
+    zip_name = f"resumes_{timestamp}.zip"
+
     with zipfile.ZipFile(zip_name, 'w') as zipf:
         for file in attachment_paths:
             zipf.write(file, os.path.basename(file))
     return zip_name
+
+def generate_email_body(survey_df):
+    html = """
+    <html>
+    <head>
+        <style>
+            body {font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4;}
+            .container {width: 80%; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);}
+            .header, .footer {background-color: #333; color: #fff; text-align: center; padding: 10px 0;}
+            .content {padding: 20px;}
+            table {width: 100%; border-collapse: collapse; margin: 20px 0;}
+            th, td {padding: 12px; border: 1px solid #ddd; text-align: left;}
+            th {background-color: #333; color: #fff;}
+            tr:nth-child(even) {background-color: #f2f2f2;}
+            tr:nth-child(odd) {background-color: #e9e9e9;}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Новые резюме</h1>
+            </div>
+            <div class="content">
+                <p>На указанный период были получены следующие отклики на вакансии (из What's App):</p>
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Phone</th>
+                        <th>Age</th>
+                        <th>Production Experience</th>
+                        <th>Completed Survey</th>
+                        <th>Resume</th>
+                    </tr>
+    """
+
+    for index, row in survey_df.iterrows():
+        html += f"""
+                    <tr>
+                        <td>{row['id']}</td>
+                        <td>{row['phone']}</td>
+                        <td>{row['age']}</td>
+                        <td>{row['production_experience']}</td>
+                        <td>{row['completed_survey']}</td>
+                        <td>{row['resume']}</td>
+                    </tr>
+        """
+
+    html += """
+                </table>
+            </div>
+            <div class="footer">
+                <p>© 2024 Your Company. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    return html
 
 def send_email(to_address, subject, body, attachment_path=None):
     '''
@@ -41,7 +102,7 @@ def send_email(to_address, subject, body, attachment_path=None):
         msg['Subject'] = subject
 
         # Add the email body
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body, 'html'))
 
         # Attach the resume file
         with open(attachment_path, "rb") as attachment:
@@ -78,7 +139,6 @@ def mailmain():
         incomplete_surveys = database.get_incomplete_surveys()
         if not incomplete_surveys.empty:
             subject = 'Новые резюме'
-            body = 'На указанный период были получены следующие отклики на вакансии (из What\'s App)' + incomplete_surveys.to_string(index=True)
             email = 'bazar.akhmet@gmail.com'
             
             attachment_paths = []
@@ -94,6 +154,7 @@ def mailmain():
                 database.update_sent_status(row['id'])
 
             if survey_ids:
+                body = generate_email_body(incomplete_surveys)
                 if attachment_paths:
                     zip_path = create_zip(attachment_paths)
                     send_email(email, subject, body, zip_path)
@@ -101,3 +162,6 @@ def mailmain():
                 else:
                     send_email(email, subject, body)
         time.sleep(3 * 24 * 3600) # 3 дня
+
+if __name__ == "__main__":
+    mailmain()
