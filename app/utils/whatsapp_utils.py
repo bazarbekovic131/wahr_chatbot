@@ -126,7 +126,8 @@ def get_text_message_input(wa_id, text):
 
 def create_interactive_json(header_text, body_text, footer_text, button_text, sections):
     """
-        This should be documented
+        Версия interactive сообщения ( Внутри списка )
+        В каждой секции списка может быть максимум 10 кнопок
     """
     interactive_json = {
         "type": "interactive",
@@ -150,6 +151,39 @@ def create_interactive_json(header_text, body_text, footer_text, button_text, se
     }
     
     return interactive_json
+
+def create_button_interactive_json(header_text, body_text, footer_text, button_text):
+    '''
+     Версия interactive сообщения ( с кнопками вместо списка )
+     Можно добавить максимум 3 кнопки
+    '''
+
+    json = {
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "header": header_text,
+            "body": {
+                "text": body_text
+            },
+            "footer": {
+                "text": footer_text
+            },
+            "action": {
+                "buttons": [
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": "123",
+                            "title": button_text
+                        }
+                    }
+                ]
+            }
+        }
+    }
+
+    return json
 
 def send_interactive(wa_id, interactive_elements):
     url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
@@ -303,19 +337,19 @@ def send_vacancies(wa_id):
     send_interactive(wa_id, data)
 
 # Should send a vacancy details
-def send_vacancy_details(from_number, vacancy):
+def send_vacancy_details(wa_id, vacancy):
     '''
-    input - from_number - is the whats app id of the recipient, in the format +787777777 (KZ)
+    input - wa_id - is the whats app id of the recipient, in the format +77777777 (KZ)
     vacancy - it is an array fetched from the database by the script
 
     output - sends a message in data format (e.g. message is converted to JSON format)
     '''
+    header_text = ""
+    body_text = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}' #TODO: add new columns i guess
+    footer_text = ""
 
-    message = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}' #TODO: add new columns i guess
-
-    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], message)
-    # data = get_text_message_input(from_number, message)
-    send_message(data)
+    data = create_button_interactive_json(header_text, body_text, footer_text, body_text="Откликнуться")
+    send_interactive(wa_id, data)
 
 def process_whatsapp_message(body):
     wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"] # change .config recipient waid to this i guess
@@ -445,6 +479,17 @@ def process_whatsapp_message(body):
             vacancy_id = int(interactive.get("list_reply", {}).get("id", ""))
             vacancy = database.get_vacancy_details(vacancy_id)
             send_vacancy_details(wa_id, vacancy)
+        elif interactive_type == 'button_reply':
+            try:
+                question = survey_questions[0]['question']
+                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+                database.set_step(wa_id) # sets to 1
+                database.set_survey_mode(wa_id, True)
+                send_message(data)
+            except KeyError:
+                logging.error('No question available for the current step.')
+            except Exception as e:
+                logging.error(f'Error while sending question or updating session: {e}')
 
     elif message_type == "document":
         # process the document only if survey mode is enabled.
