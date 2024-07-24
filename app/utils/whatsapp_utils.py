@@ -301,7 +301,7 @@ def send_template_message_with_parameters(wa_id, template_name, code, template_d
     response = requests.post(url, headers=headers, json=data)
     return response
 
-def send_location_message(number, latitude, longitude, name, address):
+def send_location_message(wa_id, latitude, longitude, name, address):
     url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
     headers = {
         "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
@@ -352,6 +352,38 @@ def send_vacancy_details(wa_id, vacancy, vacancy_id):
 
     data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться", id = vacancy_id)
     send_interactive(wa_id, data)
+
+def init_resume_flow(wa_id):
+    try:
+        question = survey_questions[0]['question']
+        data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+        database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
+        database.set_step(wa_id) # sets to 1
+        database.set_survey_mode(wa_id, True)
+        send_message(data)
+    except KeyError:
+        logging.error('No question available for the current step.')
+    except Exception as e:
+        logging.error(f'Error while sending question or updating session: {e}')
+
+def init_resume_flow_vac_filled(wa_id, interactive):
+    try:
+        vacancy_id = int(interactive.get("button_reply", {}).get("id", ""))
+        vacancy = database.get_vacancy_details(vacancy_id)
+        database.save_vacancy(wa_id, vacancy)
+
+        question = survey_questions[0]['question']
+        data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+        database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
+        database.set_step(wa_id) # sets to 1
+        database.set_survey_mode(wa_id, True)
+        send_message(data)
+    except KeyError:
+        logging.error('No question available for the current step.')
+    except Exception as e:
+        logging.error(f'Error while sending question or updating session: {e}')
+
+#####################
 
 def process_whatsapp_message(body):
     wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"] # change .config recipient waid to this i guess
@@ -438,14 +470,6 @@ def process_whatsapp_message(body):
             send_vacancies(wa_id)
             sent_answer = True
 
-        # if ('социальные льготы' in message_body):
-        #     send_social_details(wa_id)
-        #     sent_answer = True
-
-        # if ('резюме' in message_body):
-        #     send_template_message(wa_id, template_name="resume_form", code="ru")
-        #     sent_answer = True
-
         if not sent_answer:
             vacancies = database.get_vacancies()
             for idx, vacancy_title in vacancies: # vacancy details
@@ -477,18 +501,9 @@ def process_whatsapp_message(body):
         
         if payload == 'Отправить резюме': # Doesn't work yet
             # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
-
-            try:
-                question = survey_questions[0]['question']
-                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
-                database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
-                database.set_step(wa_id) # sets to 1
-                database.set_survey_mode(wa_id, True)
-                send_message(data)
-            except KeyError:
-                logging.error('No question available for the current step.')
-            except Exception as e:
-                logging.error(f'Error while sending question or updating session: {e}')
+        
+            send_location_message(wa_id, 51.16603968026849, 71.50774278447689, 'Приходите на собеседование', 'Мы распологаемся по адресу: г. Астана, 92-ая улица, 2')
+            # init_resume_flow(wa_id)
         
         if payload == 'Процесс найма':
             send_template_message(wa_id, template_name="hiring_conditions", code="ru")
@@ -504,21 +519,9 @@ def process_whatsapp_message(body):
             vacancy = database.get_vacancy_details(vacancy_id)
             send_vacancy_details(wa_id, vacancy, vacancy_id)
         elif interactive_type == 'button_reply':
-            try:
-                vacancy_id = int(interactive.get("button_reply", {}).get("id", ""))
-                vacancy = database.get_vacancy_details(vacancy_id)
-                database.save_vacancy(wa_id, vacancy_id)
+            send_location_message(wa_id, 51.16603968026849, 71.50774278447689, 'Приходите на собеседование', 'Мы распологаемся по адресу: г. Астана, 92-ая улица, 2')
 
-                question = survey_questions[0]['question']
-                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
-                database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
-                database.set_step(wa_id) # sets to 1
-                database.set_survey_mode(wa_id, True)
-                send_message(data)
-            except KeyError:
-                logging.error('No question available for the current step.')
-            except Exception as e:
-                logging.error(f'Error while sending question or updating session: {e}')
+            # init_resume_flow_vac_filled(wa_id, interactive)
 
     elif message_type == "document":
         # process the document only if survey mode is enabled.
