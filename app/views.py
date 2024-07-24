@@ -92,7 +92,5 @@ def webhook_post():
 
 @webhook_blueprint.route('/test', methods=['POST', 'GET'])
 def webhook_test():
-    mailmain()
-
     return jsonify({"status": "OK"}), 200
 
