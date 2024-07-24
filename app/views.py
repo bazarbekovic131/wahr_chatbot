@@ -8,7 +8,6 @@ from .utils.whatsapp_utils import (
     process_whatsapp_message,
     is_valid_whatsapp_message,
 )
-from .services.email_service import mailmain
 from dotenv import load_dotenv
 import os
 from app.utils.db import WADatabase
