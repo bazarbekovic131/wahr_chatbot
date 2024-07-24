@@ -185,7 +185,6 @@ class WADatabase():
             df = cursor.fetchone()
             return df
         
-    # TODO: add pagination of vacancies by 10 MARK: DONE!
     def get_vacancies_for_interactive_message(self):
         vacancies = self.get_vacancies_with_details()
         def shorten_title(title, max_length=24):

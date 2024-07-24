@@ -347,7 +347,7 @@ def send_vacancy_details(wa_id, vacancy, vacancy_id):
     output - sends a message in data format (e.g. message is converted to JSON format)
     '''
     header_text = ""
-    body_text = f'Вакансия: {vacancy[0]}\n\n Зарплата: {vacancy[4]}Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]} \n\n Обязанности: {vacancy[3]} ' #TODO: add new columns i guess
+    body_text = f'Вакансия: *{vacancy[0]}*\n\n *Зарплата:* {vacancy[4]}\n\n *Требования:*\n {vacancy[1]}\n\n  *Условия работы:*\n {vacancy[2]} \n\n *Обязанности:* \n{vacancy[3]} ' #TODO: add new columns i guess. New columns added. add formatting
     footer_text = ""
 
     data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться", id = vacancy_id)
@@ -490,7 +490,7 @@ def process_whatsapp_message(body):
         payload = message.get("button", {}).get("payload", "")
         
         if payload == 'О нас':
-            send_template_message(wa_id, template_name="company_details", code="ru") #TODO: reimplemented DONE
+            send_template_message(wa_id, template_name="company_details", code="ru")
         
         if payload == 'Вакансии':
             logging.info('Vacancies Payload Reached. Trying to send interactive message')
@@ -500,7 +500,7 @@ def process_whatsapp_message(body):
             send_template_message(wa_id, template_name="help_ru", code="ru")
         
         if payload == 'Отправить резюме': # Doesn't work yet
-            # send_template_message(wa_id, template_name="resume_form", code="ru") # TODO: new flow needs to be done
+            # send_template_message(wa_id, template_name="resume_form", code="ru")
         
             send_location_message(wa_id, 51.16603968026849, 71.50774278447689, 'Мы ждем Вас на собеседовании с понедельника по пятницу с 9:00 до 16:00 (обед 13:00-14:00). Ссылка в 2Гис: https://go.2gis.com/e7yls. Можете добраться автобусом 64 (остановка "Астана Ютария", пешком 16 минут).', 'Адрес: г. Астана, 92-ая улица, 2') # factory address
             # init_resume_flow(wa_id)
