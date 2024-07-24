@@ -172,7 +172,7 @@ class WADatabase():
         
     def get_vacancies_with_details(self):
         with self.conn.cursor() as cursor:
-            cursor.execute("SELECT id, title, tasks, details FROM vacancies")
+            cursor.execute("SELECT id, title, salary FROM vacancies")
             return cursor.fetchall()
 
     def get_vacancy_details(self, vacancy_id):
@@ -181,7 +181,7 @@ class WADatabase():
         '''
 
         with self.conn.cursor() as cursor:
-            cursor.execute("SELECT title, requirements, details FROM vacancies WHERE id=%s", (vacancy_id,))
+            cursor.execute("SELECT title, requirements, details, tasks, salary FROM vacancies WHERE id=%s", (vacancy_id,))
             df = cursor.fetchone()
             return df
         
@@ -209,7 +209,7 @@ class WADatabase():
             section_vacancies = vacancies[i:i + max_rows_per_section]
             section = {
                 "title": f"Стр. {i // max_rows_per_section + 1}",
-                "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": ""} for vac in section_vacancies]
+                "rows": [{"id": str(vac[0]), "title": shorten_title(vac[1]), "description": vac[2]} for vac in section_vacancies]
             }
             sections.append(section)
         

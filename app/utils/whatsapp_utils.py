@@ -347,7 +347,7 @@ def send_vacancy_details(wa_id, vacancy, vacancy_id):
     output - sends a message in data format (e.g. message is converted to JSON format)
     '''
     header_text = ""
-    body_text = f'Вакансия: {vacancy[0]}\n\n Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]}' #TODO: add new columns i guess
+    body_text = f'Вакансия: {vacancy[0]}\n\n Зарплата: {vacancy[4]}Требования:\n {vacancy[1]}\n\n  Условия работы:\n {vacancy[2]} \n\n Обязанности: {vacancy[3]} ' #TODO: add new columns i guess
     footer_text = ""
 
     data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться", id = vacancy_id)
