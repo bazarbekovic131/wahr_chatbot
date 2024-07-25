@@ -21,15 +21,18 @@ class WADatabase():
             cur.execute("""CREATE TABLE IF NOT EXISTS users (
                         id SERIAL PRIMARY KEY,
                         phone VARCHAR(32) UNIQUE NOT NULL,
-                        has_completed_survey BOOLEAN REFERENCES surveys (completed_survey)
+                        current_step INTEGER DEFAULT 0,
+                        survey_mode BOOLEAN DEFAULT FALSE,
+                        has_completed_survey BOOLEAN DEFAULT FALSE,
+                        wants_notifications BOOLEAN DEFAULT TRUE
                         );""")
             
             cur.execute("""CREATE TABLE IF NOT EXISTS surveys (
                         id SERIAL PRIMARY KEY,
-                        phone VARCHAR(16) UNIQUE NOT NULL,
+                        phone VARCHAR(16) UNIQUE NOT NULL REFERENCES users(phone),
                         age VARCHAR(32),
                         production_experience VARCHAR(32),
-                        completed_survey BOOLEAN,
+                        completed_survey BOOLEAN DEFAULT FALSE,
                         name VARCHAR(50),
                         vacancy VARCHAR(32),
                         sent BOOLEAN DEFAULT FALSE,
@@ -42,7 +45,8 @@ class WADatabase():
                         title VARCHAR(255) NOT NULL,
                         requirements TEXT,
                         details TEXT,
-                        tasks TEXT
+                        tasks TEXT,
+                        salary VARCHAR(32) DEFAULT 'Не указано'
                         );'''
             cur.execute(create_table_query)
 
@@ -221,7 +225,7 @@ class WADatabase():
             cur.execute(query)
             df = cur.fetchall()
         self.conn.commit()
-        return pd.DataFrame(df, columns=['id', 'phone', 'age','sent', 'name', 'completed_survey', 'production_experience', 'resume', 'vacancy'])
+        return pd.DataFrame(df, columns=['id', 'phone', 'age','production_experience', 'completed_survey', 'name', 'vacancy', 'sent', 'resume'])
 
     def update_sent_status(self, survey_id):
         query = """
