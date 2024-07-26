@@ -198,7 +198,7 @@ def send_interactive(wa_id, interactive_elements):
     data = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": current_app.config["RECIPIENT_WAID"], #change to something else
+        "to": wa_id, #change to something else
     }
     data.update(interactive_elements)
 
@@ -244,7 +244,7 @@ def send_message(data):
         log_http_response(response)
         return response
 
-def send_template_message(number, template_name = "hello_world", code = "en-US"):
+def send_template_message(wa_id, template_name = "hello_world", code = "en-US"):
     url = f"https://graph.facebook.com/{current_app.config['VERSION']}/{current_app.config['PHONE_NUMBER_ID']}/messages"
     headers = {
         "Authorization": "Bearer " + current_app.config["ACCESS_TOKEN"],
@@ -252,7 +252,7 @@ def send_template_message(number, template_name = "hello_world", code = "en-US")
     }
     data = {
         "messaging_product": "whatsapp",
-        "to": current_app.config["RECIPIENT_WAID"], #change to something else
+        "to": wa_id, #change to something else
         "type": "template",
         "template": {"name": f"{template_name}", "language": {"code": f"{code}"}},
     }
@@ -309,7 +309,7 @@ def send_location_message(wa_id, latitude, longitude, name, address):
     }
     data = {
         "messaging_product": "whatsapp",
-        "to": current_app.config["RECIPIENT_WAID"], #change to something else
+        "to": wa_id, #change to something else
         "type": "location",
         "location": {
             "latitude": f"{latitude}",
@@ -356,7 +356,7 @@ def send_vacancy_details(wa_id, vacancy, vacancy_id):
 def init_resume_flow(wa_id):
     try:
         question = survey_questions[0]['question']
-        data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+        data = get_text_message_input(wa_id, question)
         database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
         database.set_step(wa_id) # sets to 1
         database.set_survey_mode(wa_id, True)
@@ -373,7 +373,7 @@ def init_resume_flow_vac_filled(wa_id, interactive):
         database.save_vacancy(wa_id, vacancy)
 
         question = survey_questions[0]['question']
-        data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+        data = get_text_message_input(wa_id, question)
         database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=False)
         database.set_step(wa_id) # sets to 1
         database.set_survey_mode(wa_id, True)
@@ -425,7 +425,7 @@ def process_whatsapp_message(body):
                 database.increment_step(wa_id)
 
             question = survey_questions[step]['question']
-            data = get_text_message_input(current_app.config["RECIPIENT_WAID"], question)
+            data = get_text_message_input(wa_id, question)
             database.increment_step(wa_id)
             database.save_survey_results(wa_id, key, message_body)
         else:
@@ -444,22 +444,22 @@ def process_whatsapp_message(body):
                 except Exception as e:
                     error = f'Ошибка при обработке отправленного документа: {e}'
                     logging.error(error)
-                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], error)
+                    data = get_text_message_input(wa_id, error)
                     send_message(data)
                     return jsonify({"status": "error", "message": str(e)}), 500
 
-                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], "Мы сохранили ваши данные!")
+                data = get_text_message_input(wa_id, "Мы сохранили ваши данные!")
             elif message_type == 'text':
                 message_body = message.get("text", {}).get("body", "")
                 if message_body != 'Нет':
-                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Пожалуйста, отправьте файл в качестве ответа. Если вы желаете не указывать резюме, напишите "Нет".')
+                    data = get_text_message_input(wa_id, 'Пожалуйста, отправьте файл в качестве ответа. Если вы желаете не указывать резюме, напишите "Нет".')
                 else:
                     database.set_survey_mode(wa_id, value=False)
                     database.mark_survey_as_completed_or_incompleted(wa_id, isCompleted=True) # this should mark it as completed for the user
                     database.save_survey_results(wa_id, key, "Не указан")
-                    data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Ваши данные сохранены. Резюме не указано.')
+                    data = get_text_message_input(wa_id, 'Ваши данные сохранены. Резюме не указано.')
             else:
-                data = get_text_message_input(current_app.config["RECIPIENT_WAID"], 'Пожалуйста, отправьте файл в качестве ответа.')
+                data = get_text_message_input(wa_id, 'Пожалуйста, отправьте файл в качестве ответа.')
         send_message(data)
 
 
@@ -475,7 +475,7 @@ def process_whatsapp_message(body):
             for idx, vacancy_title in vacancies: # vacancy details
                 if vacancy_title.lower() in message_body:
                     vacancy = database.get_vacancy_details(idx)
-                    # data = get_text_message_input(current_app.config["RECIPIENT_WAID"], response)
+                    # data = get_text_message_input(wa_id, response)
                     # send_message(data)
                     send_vacancy_details(wa_id, vacancy)
                     sent_answer = True
@@ -536,7 +536,7 @@ def process_whatsapp_message(body):
         except Exception as e:
             error = f'Ошибка при обработке отправленного документа: {e}'
             logging.error(error)
-            data = get_text_message_input(current_app.config["RECIPIENT_WAID"], error)
+            data = get_text_message_input(wa_id, error)
             send_message(data)
             return jsonify({"status": "error", "message": str(e)}), 500
     
