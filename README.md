@@ -214,7 +214,7 @@ User=web-shark-kz
 Group=www-data
 WorkingDirectory=/home/web-shark-kz/Documents/wahr_chatbot/
 Environment="PATH=/home/web-shark-kz/Documents/wahr_chatbot/myenv/bin"
-ExecStart=/home/web-shark-kz/Documents/wahr_chatbot/myenv/bin/gunicorn -w 4 -b 0.0.0.0:5000 app:run
+ExecStart=/home/web-shark-kz/Documents/wahr_chatbot/myenv/bin/gunicorn -w 4 -b 0.0.0.0:5000 run:app
 
 [Install]
 
