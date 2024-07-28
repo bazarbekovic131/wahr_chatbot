@@ -25,9 +25,9 @@ database = WADatabase(db_config)
 survey_questions = [
     {"question": "Как вас зовут?", "key": "name"},
     {"question": "Сколько вам лет?", "key": "age"},
-    {"question": "На какую вакансию вы хотите устроиться?", "key": "vacancy"},
-    {"question": "Какой у вас опыт работы?", "key": "production_experience"},
-    {"question": "Пожалуйста, загрузите ваше резюме. Если у Вас его нет, напишите \"Нет\".", "key": "resume"}
+    # {"question": "На какую вакансию вы хотите устроиться?", "key": "vacancy"},
+    # {"question": "Какой у вас опыт работы?", "key": "production_experience"},
+    # {"question": "Пожалуйста, загрузите ваше резюме. Если у Вас его нет, напишите \"Нет\".", "key": "resume"}
 ]
 
 
@@ -346,8 +346,12 @@ def send_vacancy_details(wa_id, vacancy, vacancy_id):
 
     output - sends a message in data format (e.g. message is converted to JSON format)
     '''
+
+    def process_array_text(text_element):
+        text_element.replace('.', '\n > ')
+
     header_text = ""
-    body_text = f'Вакансия: *{vacancy[0]}*\n\n *Зарплата:* {vacancy[4]}\n\n *Требования:*\n {vacancy[1]}\n\n  *Условия работы:*\n {vacancy[2]} \n\n *Обязанности:* \n{vacancy[3]} ' #TODO: add new columns i guess. New columns added. add formatting
+    body_text = f'Вакансия: *{vacancy[0]}*\n\n *Зарплата:* {process_array_text(vacancy[4])}\n\n *Требования:*\n {process_array_text(vacancy[1])}\n\n  *Условия работы:*\n {process_array_text(vacancy[2])} \n\n *Обязанности:* \n{process_array_text(vacancy[3])} ' #TODO: add new columns i guess. New columns added. add formatting
     footer_text = ""
 
     data = create_button_interactive_json(header_text, body_text, footer_text, button_text="Откликнуться", id = vacancy_id)
