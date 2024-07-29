@@ -348,9 +348,9 @@ def send_vacancy_details(wa_id, vacancy, vacancy_id):
     '''
 
     def process_array_text(text_element):
-        text_element.replace(';', '\n- ')
-        return text_element
-
+        te = text_element.replace(';', '\n- ')
+        return te
+        
     header_text = ""
     body_text = f'Вакансия: *{vacancy[0]}*\n\n *Зарплата:* {vacancy[4]}\n\n *Требования:*\n {process_array_text(vacancy[1])}\n\n  *Условия работы:*\n {process_array_text(vacancy[2])} \n\n *Обязанности:* \n{process_array_text(vacancy[3])} ' #TODO: add new columns i guess. New columns added. add formatting
     footer_text = ""
