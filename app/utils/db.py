@@ -185,7 +185,7 @@ class WADatabase():
         '''
 
         with self.conn.cursor() as cursor:
-            cursor.execute("SELECT title, requirements, details, tasks, salary FROM vacancies WHERE id=%s", (vacancy_id,))
+            cursor.execute("SELECT title, requirements, details, tasks, salary FROM vacancies WHERE id=%s;", (vacancy_id,))
             df = cursor.fetchone()
             return df
         
