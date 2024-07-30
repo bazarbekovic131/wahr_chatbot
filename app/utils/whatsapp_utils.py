@@ -526,7 +526,7 @@ def process_whatsapp_message(body):
         elif interactive_type == 'button_reply':
             vacancy_id = int(interactive.get("button_reply", {}).get("id", ""))
             vacancy = database.get_vacancy_details(vacancy_id)
-            database.save_vacancy(wa_id, vacancy)
+            database.save_vacancy(wa_id, vacancy[0])
             send_location_message(wa_id, 51.16603968026849, 71.50774278447689, 'Мы ждем Вас на собеседовании с понедельника по пятницу с 9:00 до 16:00 (обед 13:00-14:00). Ссылка в 2Гис: https://go.2gis.com/e7yls. Можете добраться автобусом 64 (остановка "Астана Ютария", пешком 16 минут).', 'Адрес: г. Астана, 92-ая улица, 2') # factory address
             # init_resume_flow_vac_filled(wa_id, interactive)
 
