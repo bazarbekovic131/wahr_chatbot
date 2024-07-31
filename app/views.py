@@ -105,7 +105,7 @@ def webhook_test():
 
 @webhook_blueprint.route("/send_messages", methods = ["POST"])
 def send_messages_list():
-    verification = request.headers.get('token')
+    verification = request.headers.get('token', '')
     if verification == current_app.config['VERIFY_TOKEN']:
         body = request.get_json()
         send_messages_to_selected_users(body)
