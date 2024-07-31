@@ -83,12 +83,16 @@ def verify():
         return jsonify({"status": "error", "message": "Missing parameters"}), 400
 
 def send_messages_to_selected_users(body):
-    contacts = body.get("contacts", [{}])
-    for contact in contacts:
-        number = contact.get("phone", "") # phone number
-        name = contact.get("name", "") # name
-        # send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
-        send_template_message(number, template_name="greeting", code="ru")
+    try:
+        contacts = body.get("contacts", [{}])
+        for contact in contacts:
+            number = contact.get("phone", "") # phone number
+            name = contact.get("name", "") # name
+            # send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
+            send_template_message(number, template_name="greeting", code="ru")
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"status": f"error: {e}"}), 400
 
 @webhook_blueprint.route("/webhook", methods=["GET"])
 def webhook_get():
@@ -107,8 +111,8 @@ def send_messages_list():
     verification = request.headers.get('token', '')
     if verification == current_app.config['VERIFY_TOKEN']:
         body = request.get_json()
-        send_messages_to_selected_users(body)
         logging.info(f'Logged a post request: Body is {body}')
+        return send_messages_to_selected_users(body)
     else:
         return jsonify({"status": "error", "message": "Verification failed"}), 400
     
