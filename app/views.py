@@ -84,10 +84,9 @@ def verify():
 
 def send_messages_to_selected_users(body):
     contacts = body.get("contacts", [{}])
-    # number = contacts.get("phone", "") # phone number
-    # name = contacts.get("name", "") # name
-    for number, name in contacts:
-        name = ''
+    for contact in contacts:
+        number = contact.get("phone", "") # phone number
+        name = contact.get("name", "") # name
         # send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
         send_template_message(number, template_name="greeting", code="ru")
 
