@@ -245,6 +245,11 @@ class WADatabase():
 
     def wants_notifications(self, phone):
         query = "SELECT wants_notifications FROM users WHERE phone = %s"
-        self.conn.cursor().execute(query, (phone,))
-        self.conn.cursor().close()
-        return self.conn.cursor().fetchone()
+
+        with self.conn.cursor() as cur:
+            cur.execute(query, (phone,))
+            notif  = cur.fetchone() # fetch phone number
+            cur.close()
+        if notif is None:
+            return False
+        return True
