@@ -239,7 +239,7 @@ class WADatabase():
         self.conn.commit()
 
     def set_notification_preference(self, preference, phone):
-        query = "UPDATE surveys SET sent = %s WHERE phone = %s"
+        query = "UPDATE users SET wants_notifications = %s WHERE phone = %s"
         self.conn.cursor().execute(query, (preference, phone,))
         self.conn.commit()
 
