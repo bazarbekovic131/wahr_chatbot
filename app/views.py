@@ -99,6 +99,7 @@ def send_messages_to_selected_users(body):
         contacts = body.get("contacts", [{}])
         for contact in contacts:
             number = contact.get("phone", "") # phone number
+            number = number.replace('+','').strip()
             number_in_db = database_wa.get_user(number)
             if number_in_db == False:
                 database_wa.create_user(number)
