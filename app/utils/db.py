@@ -223,7 +223,6 @@ class WADatabase():
         
         return sections
 
-    # new ones. untested
     def get_incomplete_surveys(self):
         with self.conn.cursor() as cur:
             query = 'SELECT * FROM surveys WHERE sent = FALSE;'
@@ -238,3 +237,13 @@ class WADatabase():
         """
         self.conn.cursor().execute(query, (survey_id,))
         self.conn.commit()
+
+    def set_notification_preference(self, preference, phone):
+        query = "UPDATE surveys SET sent = %s WHERE phone = %s"
+        self.conn.cursor().execute(query, (preference, phone,))
+        self.conn.commit()
+
+    def wants_notifications(self, phone):
+        query = "SELECT wants_notifications FROM users WHERE phone = %s"
+        self.conn.cursor().execute(query, (phone,))
+        return self.conn.cursor().fetchone()

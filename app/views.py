@@ -99,10 +99,15 @@ def send_messages_to_selected_users(body):
         contacts = body.get("contacts", [{}])
         for contact in contacts:
             number = contact.get("phone", "") # phone number
+            number_in_db = database_wa.get_user(number)
+            if number_in_db == False:
+                database_wa.create_user(number)
             name = contact.get("name", "") # name
-            send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
+            wants_notifications = database_wa.wants_notifications(phone=number)
+            if wants_notifications != False:
+                send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
             # send_template_message(number, template_name="greeting", code="ru")
-            time.sleep(1)
+                time.sleep(1)
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"status": f"error: {e}"}), 400
