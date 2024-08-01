@@ -100,12 +100,16 @@ def send_messages_to_selected_users(body):
         for contact in contacts:
             number = contact.get("phone", "") # phone number
             number = number.replace('+','').strip()
+            logging.info(f'number: {number}')
             number_in_db = database_wa.get_user(number)
+            logging.info(f'exists?: {number_in_db}')
             if number_in_db == False:
                 database_wa.create_user(number)
+                logging.info(f'created user: {number}')
             name = contact.get("name", "") # name
-            wants_notifications = database_wa.wants_notifications(phone=number)
-            if wants_notifications != False:
+            wants_notif = database_wa.wants_notifications(phone=number)
+            logging.info(f'Wants notifs?: {wants_notif}')
+            if wants_notif != False:
                 send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
             # send_template_message(number, template_name="greeting", code="ru")
                 time.sleep(1)

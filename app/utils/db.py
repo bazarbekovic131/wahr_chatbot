@@ -246,4 +246,5 @@ class WADatabase():
     def wants_notifications(self, phone):
         query = "SELECT wants_notifications FROM users WHERE phone = %s"
         self.conn.cursor().execute(query, (phone,))
+        self.conn.cursor().close()
         return self.conn.cursor().fetchone()
