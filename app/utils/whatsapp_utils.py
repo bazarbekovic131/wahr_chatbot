@@ -517,7 +517,7 @@ def process_whatsapp_message(body):
             send_template_message(wa_id, template_name="help_ru", code="ru")
         
         if payload == 'Не присылать рекламу':
-            database.set_notification_preference(preference=False, value=wa_id)
+            database.set_notification_preference(preference=False, phone=wa_id)
 
     elif message_type == 'interactive':
         interactive = message.get("interactive", {})
