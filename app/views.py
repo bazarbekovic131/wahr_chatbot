@@ -12,6 +12,18 @@ from .utils.whatsapp_utils import (
 from dotenv import load_dotenv
 import os
 from app.utils.db import WADatabase
+import time
+
+load_dotenv()
+
+db_config = {
+    'host': os.getenv("DBHOST"),
+    'database': os.getenv("DBNAME"),
+    'user': os.getenv("DBUSER"),
+    'password': os.getenv("DBPASSWORD"),
+    'port': os.getenv("DBPORT")
+}
+database_wa = WADatabase(db_config)
 
 webhook_blueprint = Blueprint("webhook", __name__)
 
@@ -88,8 +100,9 @@ def send_messages_to_selected_users(body):
         for contact in contacts:
             number = contact.get("phone", "") # phone number
             name = contact.get("name", "") # name
-            # send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
-            send_template_message(number, template_name="greeting", code="ru")
+            send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
+            # send_template_message(number, template_name="greeting", code="ru")
+            time.sleep(1)
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"status": f"error: {e}"}), 400
@@ -119,3 +132,45 @@ def send_messages_list():
 # @webhook_blueprint.route('/')
 # def index():
 #     return render_template('index.html')
+
+@webhook_blueprint.route("/vacancies", methods = ["GET"])
+def vacancies_list():
+    data = database_wa.get_vacancies_full()
+    vacancies = []
+    for idx, title, details, requirements, tasks, salary in data:
+        el = {
+            "id": idx,
+            "title": title,
+            "details": details,
+            "requirements": requirements,
+            "tasks": tasks,
+            "salary": salary
+        }
+        vacancies.append(el)
+    json_object = vacancies
+    json_object = json.dumps(json_object, indent=4)
+
+    return json_object # return a JSON of all vacancies
+
+@webhook_blueprint.route("/users", methods = ["GET"])
+def users_list():
+    data = database_wa.get_users_full()
+    
+    vacancies = []
+    for idx, title, details, requirements, tasks, salary in data:
+        el = {
+            "id": idx,
+            "title": title,
+            "details": details,
+            "requirements": requirements,
+            "tasks": tasks,
+            "salary": salary
+        }
+        vacancies.append(el)
+
+    return jsonify(vacancies) # return a JSON of all vacancies
+
+
+@webhook_blueprint.route("/surveys", methods = ["GET"])
+def surveys_list():
+    return jsonify(database_wa.get_surveys_full()) # return a JSON of all surveys

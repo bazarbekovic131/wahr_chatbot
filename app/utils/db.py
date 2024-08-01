@@ -178,6 +178,11 @@ class WADatabase():
         with self.conn.cursor() as cursor:
             cursor.execute("SELECT id, title, salary FROM vacancies")
             return cursor.fetchall()
+        
+    def get_vacancies_full(self):
+        with self.conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM vacancies")
+            return cursor.fetchall()
 
     def get_vacancy_details(self, vacancy_id):
         '''
