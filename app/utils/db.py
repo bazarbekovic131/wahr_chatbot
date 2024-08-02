@@ -231,11 +231,9 @@ class WADatabase():
         self.conn.commit()
         return pd.DataFrame(df, columns=['id', 'phone', 'age','production_experience', 'completed_survey', 'name', 'vacancy', 'sent', 'resume'])
 
-    def update_sent_status(self, survey_id):
-        query = """
-            UPDATE surveys SET sent = TRUE WHERE id = %s;
-        """
-        self.conn.cursor().execute(query, (survey_id,))
+    def update_sent_status(self, value, phone):
+        query = "UPDATE surveys SET sent = %s WHERE phone = %s;"
+        self.conn.cursor().execute(query, (value, phone,))
         self.conn.commit()
 
     def set_notification_preference(self, preference, phone):
