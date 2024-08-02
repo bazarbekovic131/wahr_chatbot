@@ -110,7 +110,10 @@ def send_messages_to_selected_users(body):
             wants_notif = database_wa.wants_notifications(phone=number)
             logging.info(f'Wants notifs?: {wants_notif}')
             if wants_notif != False:
-                send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
+                try:
+                    send_template_message(number, template_name="rassylka_vacansii", code="ru") # TODO: this template doesn't exist yet.
+                except Exception as err3:
+                    logging.error(f'Error occurred: {err3}')
             # send_template_message(number, template_name="greeting", code="ru")
                 time.sleep(1)
         return jsonify({"status": "ok"}), 200
