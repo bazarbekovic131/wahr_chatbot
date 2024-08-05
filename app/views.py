@@ -147,42 +147,47 @@ def send_messages_list():
 
 @webhook_blueprint.route("/vacancies", methods = ["GET"])
 def vacancies_list():
-    data = database_wa.get_vacancies_full()
-    vacancies = []
-    for idx, title, details, requirements, tasks, salary in data:
-        el = {
-            "id": idx,
-            "title": title,
-            "details": details,
-            "requirements": requirements,
-            "tasks": tasks,
-            "salary": salary
-        }
-        vacancies.append(el)
-    json_object = vacancies
-    json_object = json.dumps(json_object, indent=4)
+    verification = request.headers.get('token', '')
+    if verification == current_app.config['VERIFY_TOKEN']:
+        data = database_wa.get_vacancies_full()
+        vacancies = []
+        for idx, title, details, requirements, tasks, salary in data:
+            el = {
+                "id": idx,
+                "title": title,
+                "details": details,
+                "requirements": requirements,
+                "tasks": tasks,
+                "salary": salary
+            }
+            vacancies.append(el)
+        json_object = vacancies
+        json_object = json.dumps(json_object, indent=4)
 
-    return json_object # return a JSON of all vacancies
+        return json_object # return a JSON of all vacancies
+    else:
+        return jsonify({"status": "error", "message": "Failed verification"}), 400
 
 @webhook_blueprint.route("/users", methods = ["GET"])
 def users_list():
-    data = database_wa.get_users_full()
-    
-    vacancies = []
-    for idx, title, details, requirements, tasks, salary in data:
-        el = {
-            "id": idx,
-            "title": title,
-            "details": details,
-            "requirements": requirements,
-            "tasks": tasks,
-            "salary": salary
-        }
-        vacancies.append(el)
+    verification = request.headers.get('token', '')
+    if verification == current_app.config['VERIFY_TOKEN']:
+        data = database_wa.get_users_full()
+        
+        users = []
+        for idx, phone, hasCompletedSurvey, current_step, wantsNotifications in data:
+            el = {
+                "id": idx,
+                "phone": phone,
+                "want_notifications": wantsNotifications
+            }
+            users.append(el)
 
-    return jsonify(vacancies) # return a JSON of all vacancies
+        return jsonify(users) # return a JSON of all vacancies
+    else:
+        return jsonify({"status": "error", "message": "Failed verification"}), 400
 
 
-@webhook_blueprint.route("/surveys", methods = ["GET"])
-def surveys_list():
-    return jsonify(database_wa.get_surveys_full()) # return a JSON of all surveys
+# @webhook_blueprint.route("/surveys", methods = ["GET"])
+# def surveys_list():
+#     return jsonify(database_wa.get_surveys_full()) # return a JSON of all surveys
