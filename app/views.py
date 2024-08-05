@@ -115,7 +115,6 @@ def send_messages_to_selected_users(body):
                 except Exception as err3:
                     logging.error(f'Error occurred: {err3}')
             # send_template_message(number, template_name="greeting", code="ru")
-                time.sleep(1)
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"status": f"error: {e}"}), 400
